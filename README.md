@@ -1,8 +1,16 @@
+
+<img width="1535" height="695" alt="image" src="https://github.com/user-attachments/assets/beaa03dc-f9a0-478c-ba92-1cfc2304d3ea" />
+
+<img width="1532" height="682" alt="image" src="https://github.com/user-attachments/assets/8532bc7a-9368-4c35-9860-536cffb13046" />
+
+<img width="1522" height="631" alt="image" src="https://github.com/user-attachments/assets/fe5f540d-dbc5-4bbf-81e6-37305506152f" />
+
+<img width="1517" height="680" alt="image" src="https://github.com/user-attachments/assets/92fe1100-ffaf-42f0-893b-3990cab4cf1b" />
+
+
 # Speech-to-Speech Conversational AI System
 
 A production-ready, real-time voice conversation system with Speech-to-Text (STT), Large Language Model (LLM), and Text-to-Speech (TTS) integration.
-
-> **📚 [Documentation Index](INDEX.md)** | **⚡ [Quick Start](QUICKSTART.md)** | **🔌 [API Reference](API.md)** | **🏗️ [Architecture](ARCHITECTURE.md)**
 
 ## 🎯 Features
 
@@ -54,7 +62,7 @@ The backend is organized into 4 modular layers:
 
 ### Prerequisites
 
-- Python 3.9+ (backend)
+- Python 3.14+ (backend)
 - Node.js 18+ (frontend)
 - API Keys:
   - OpenAI API key
@@ -71,7 +79,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r requirements_flask.txt
 
 # Copy environment file
 cp .env.example .env
@@ -94,90 +102,13 @@ echo "VITE_API_URL=http://localhost:8000" > .env
 
 ## 🚀 Running the Application
 
-### Start Backend
+### Start project
 
 ```bash
-cd backend
-python main.py
+python app_working.py
 ```
 
-Backend will run on `http://localhost:8000`
-
-### Start Frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
-Frontend will run on `http://localhost:3000`
-
-## 🔌 API Documentation
-
-### REST Endpoints
-
-#### Create Session
-```http
-POST /session
-Content-Type: application/json
-
-{
-  "system_prompt": "You are a helpful voice assistant."
-}
-
-Response:
-{
-  "session_id": "uuid-string"
-}
-```
-
-#### Delete Session
-```http
-DELETE /session/{session_id}
-```
-
-#### Get Session State
-```http
-GET /session/{session_id}/state
-
-Response:
-{
-  "state": "listening" | "thinking" | "speaking",
-  "messages": [...]
-}
-```
-
-### WebSocket Endpoints
-
-#### Audio Input
-```
-WS /session/{session_id}/audio/in
-```
-- Send: Raw audio bytes (PCM 16-bit, 16kHz, mono)
-- Receive: Nothing (one-way stream)
-
-#### Audio Output
-```
-WS /session/{session_id}/audio/out
-```
-- Send: Keepalive messages (optional)
-- Receive: Audio chunks as bytes
-
-#### Transcript Events
-```
-WS /session/{session_id}/transcript
-```
-- Send: Keepalive messages (optional)
-- Receive: JSON transcript events
-
-Transcript event format:
-```json
-{
-  "role": "user" | "assistant",
-  "text": "transcript text",
-  "is_partial": false
-}
-```
+project will run on `http://localhost:3000/dashboard`
 
 ## ⚙️ Configuration
 
@@ -205,37 +136,7 @@ HOST=0.0.0.0
 PORT=8000
 ```
 
-### Frontend Configuration
 
-Edit `frontend/.env` (optional):
-
-```bash
-VITE_API_URL=http://localhost:8000
-```
-
-## 🧪 Testing Without API Keys
-
-The system includes mock implementations for testing:
-
-1. **Mock STT** - Replace `STTLayer` with `MockSTTLayer` in `orchestrator.py`
-2. **Mock LLM** - Replace `LLMLayer` with `MockLLMLayer` in `orchestrator.py`
-3. **Mock TTS** - Set `TTS_PROVIDER=mock` in `.env`
-
-## 🎨 Customization
-
-### Change System Prompt
-
-Frontend: Edit `SYSTEM_PROMPT` in `frontend/src/App.tsx`
-
-Backend: Pass `system_prompt` in session creation request
-
-### Switch TTS Provider
-
-Set `TTS_PROVIDER` in `backend/.env`:
-- `deepgram` - Fast, natural voices
-- `elevenlabs` - High-quality, expressive voices
-- `openai` - Consistent, clear voices
-- `mock` - Testing without API
 
 ### Adjust LLM Model
 
@@ -278,48 +179,3 @@ Set `OPENAI_MODEL` in `backend/.env`:
     └── tsconfig.json
 ```
 
-### Key Design Patterns
-
-1. **State Machine** - Conversation orchestrator uses explicit states
-2. **Observer Pattern** - Callbacks for transcript and audio events
-3. **Strategy Pattern** - Pluggable TTS providers
-4. **Singleton Pattern** - WebSocket connection management
-
-## 🔧 Troubleshooting
-
-### Audio Issues
-
-- **No microphone access**: Check browser permissions
-- **No audio output**: Verify WebSocket connection to `/audio/out`
-- **Echo/feedback**: Ensure echo cancellation is enabled
-
-### WebSocket Disconnections
-
-- Check CORS settings in `main.py`
-- Verify session exists before connecting
-- Monitor browser console for errors
-
-### API Errors
-
-- Verify API keys in `.env`
-- Check API rate limits
-- Review backend logs for detailed errors
-
-## 📝 License
-
-This project is provided as-is for educational and commercial use.
-
-## 🤝 Contributing
-
-This is a standalone project. Feel free to fork and customize for your needs.
-
-## 📚 Additional Resources
-
-- [Deepgram API Documentation](https://developers.deepgram.com/)
-- [OpenAI API Documentation](https://platform.openai.com/docs/)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [React Documentation](https://react.dev/)
-
----
-
-Built with ❤️ for real-time voice AI applications
