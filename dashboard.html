@@ -1,0 +1,2785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistants — Dashboard</title>
+    <style>
+        /* ─── Reset & Base ─── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            background: #0f1117;
+            color: #e1e1e6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ─── SVG Icon System ─── */
+        .ico {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px; flex-shrink: 0;
+        }
+        .ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .ico-sm { width: 14px; height: 14px; }
+        .ico-lg { width: 22px; height: 22px; }
+        .ico-xl { width: 28px; height: 28px; }
+        .nav-item .ico { width: 20px; height: 20px; }
+
+        /* ─── Layout ─── */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ─── Nav Rail (leftmost column) ─── */
+        .nav-rail {
+            width: 240px;
+            background: #0d0f14;
+            border-right: 1px solid #1e2030;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 0;
+            flex-shrink: 0;
+            gap: 2px;
+            z-index: 10;
+            transition: width 0.25s cubic-bezier(.4,0,.2,1);
+            overflow: hidden;
+        }
+        .nav-rail.collapsed {
+            width: 68px;
+            align-items: center;
+        }
+
+        .nav-rail .nav-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 16px;
+            margin-bottom: 12px;
+        }
+        .nav-rail.collapsed .nav-header {
+            justify-content: center;
+            padding: 4px 0;
+        }
+
+        .nav-rail .nav-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #22d3ee, #0891b2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #fff;
+            font-weight: 700;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .nav-rail .nav-brand {
+            font-size: 15px;
+            font-weight: 700;
+            color: #e1e1e6;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .nav-rail.collapsed .nav-brand { display: none; }
+
+        .nav-rail .nav-collapse-btn {
+            margin-left: auto;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid #1e2030;
+            background: #161821;
+            color: #5b5f73;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .nav-rail .nav-collapse-btn:hover { color: #e1e1e6; background: #1a1d2e; }
+        .nav-rail.collapsed .nav-collapse-btn { margin-left: 0; }
+
+        .nav-rail .nav-section-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #3b3f52;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 12px 18px 6px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .nav-rail.collapsed .nav-section-label { display: none; }
+
+        .nav-rail .nav-item {
+            margin: 1px 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            color: #7a7f95;
+            transition: all 0.15s;
+            font-size: 13px;
+            font-weight: 500;
+            position: relative;
+            user-select: none;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .nav-rail.collapsed .nav-item {
+            margin: 1px 8px;
+            padding: 12px 0;
+            justify-content: center;
+            gap: 0;
+        }
+        .nav-rail .nav-item:hover {
+            color: #e1e1e6;
+            background: #1a1d2e;
+        }
+        .nav-rail .nav-item.active {
+            color: #22d3ee;
+            background: #0c2a38;
+        }
+        .nav-rail .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            background: #22d3ee;
+            border-radius: 0 3px 3px 0;
+        }
+        .nav-rail.collapsed .nav-item.active::before {
+            left: -8px;
+        }
+        .nav-rail .nav-item .nav-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            width: 24px; height: 24px;
+        }
+        .nav-rail .nav-item .nav-icon svg {
+            width: 20px; height: 20px;
+            fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .nav-rail .nav-item .nav-label {
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .nav-rail.collapsed .nav-item .nav-label { display: none; }
+
+        .nav-rail .nav-spacer { flex: 1; }
+
+        /* ─── Page Panels (content for each nav item) ─── */
+        .page-panel {
+            display: none;
+            flex: 1;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .page-panel.active {
+            display: flex;
+        }
+
+        /* Placeholder pages */
+        .placeholder-page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #4b5563;
+            gap: 16px;
+            text-align: center;
+            padding: 40px;
+        }
+        .placeholder-page .ph-icon {
+            font-size: 56px;
+            opacity: 0.25;
+        }
+        .placeholder-page .ph-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #6b7280;
+        }
+        .placeholder-page .ph-desc {
+            font-size: 14px;
+            color: #4b5563;
+            max-width: 360px;
+            line-height: 1.6;
+        }
+        .placeholder-page .ph-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            background: #1f2937;
+            border: 1px solid #2a2d3a;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* ─── Sidebar ─── */
+        .sidebar {
+            width: 280px;
+            background: #161821;
+            border-right: 1px solid #2a2d3a;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid #2a2d3a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e1e1e6;
+            flex: 1;
+        }
+
+        .sidebar-header .docs-link {
+            font-size: 12px;
+            color: #6b7280;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .sidebar-header .docs-link:hover { color: #9ca3af; }
+
+        .create-btn {
+            margin: 12px 14px;
+            padding: 10px 16px;
+            background: #1f2937;
+            border: 1px dashed #374151;
+            border-radius: 10px;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .create-btn:hover {
+            background: #1a3a4a;
+            border-color: #22d3ee;
+            color: #22d3ee;
+        }
+        .create-btn .icon { font-size: 18px; }
+
+        .search-box {
+            margin: 0 14px 10px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 32px;
+            background: #1f2937;
+            border: 1px solid #2a2d3a;
+            border-radius: 8px;
+            color: #e1e1e6;
+            font-size: 13px;
+            outline: none;
+        }
+        .search-box input::placeholder { color: #4b5563; }
+        .search-box input:focus { border-color: #22d3ee; }
+        .search-box .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4b5563;
+            font-size: 13px;
+        }
+
+        .assistant-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 8px;
+        }
+
+        .assistant-list::-webkit-scrollbar { width: 4px; }
+        .assistant-list::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 2px; }
+
+        .assistant-item {
+            padding: 12px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-bottom: 2px;
+        }
+        .assistant-item:hover { background: #1f2937; }
+        .assistant-item.active {
+            background: #164e63;
+            border: 1px solid #22d3ee;
+        }
+
+        .assistant-item .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e1e1e6;
+            margin-bottom: 3px;
+        }
+        .assistant-item .meta {
+            font-size: 11px;
+            color: #6b7280;
+        }
+        .assistant-item .meta .provider-tag {
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        /* ─── Main Area ─── */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .main-header {
+            padding: 14px 24px;
+            border-bottom: 1px solid #2a2d3a;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #161821;
+        }
+
+        .main-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e1e1e6;
+            flex: 1;
+        }
+
+        .main-header .assistant-id {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 400;
+            cursor: pointer;
+        }
+        .main-header .assistant-id:hover { color: #9ca3af; }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #2a2d3a;
+            background: #1f2937;
+            color: #e1e1e6;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .header-btn:hover { background: #374151; }
+
+        .header-btn.talk-btn {
+            background: transparent;
+            border-color: #059669;
+            color: #10b981;
+        }
+        .header-btn.talk-btn:hover { background: rgba(5,150,105,0.12); }
+
+        .header-btn.publish-btn {
+            background: transparent;
+            border-color: #22d3ee;
+            color: #22d3ee;
+            font-weight: 600;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+        .header-btn.publish-btn.dirty {
+            pointer-events: auto;
+            opacity: 1;
+        }
+        .header-btn.publish-btn.dirty:hover { background: rgba(34,211,238,0.12); }
+
+        .header-btn.published {
+            background: transparent;
+            border-color: #10b981;
+            color: #10b981;
+            pointer-events: auto;
+            opacity: 1;
+        }
+        .header-btn.published:hover { background: rgba(16,185,129,0.12); }
+
+        .header-btn.delete-btn {
+            background: transparent;
+            border-color: #7f1d1d;
+            color: #ef4444;
+        }
+        .header-btn.delete-btn:hover { background: #7f1d1d; color: white; }
+
+        /* ─── Tabs ─── */
+        .tabs {
+            display: flex;
+            gap: 0;
+            padding: 0 24px;
+            background: #161821;
+            border-bottom: 1px solid #2a2d3a;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tab:hover { color: #e1e1e6; }
+        .tab.active {
+            color: #22d3ee;
+            border-bottom-color: #22d3ee;
+        }
+        .tab .tab-icon { font-size: 15px; }
+
+        /* ─── Content Area ─── */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+        }
+        .content-area::-webkit-scrollbar { width: 6px; }
+        .content-area::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
+
+        /* ─── Settings Panel ─── */
+        .settings-panel {
+            max-width: 720px;
+        }
+
+        .setting-group {
+            margin-bottom: 28px;
+        }
+
+        .setting-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d1d5db;
+            margin-bottom: 6px;
+        }
+
+        .setting-group .hint {
+            font-size: 11px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .setting-group .hint .info-icon {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid #4b5563;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: #6b7280;
+        }
+
+        .setting-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .setting-row .setting-group { flex: 1; margin-bottom: 0; }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: #1f2937;
+            border: 1px solid #2a2d3a;
+            border-radius: 8px;
+            color: #e1e1e6;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-select:focus, .form-input:focus { border-color: #22d3ee; }
+        .form-select option { background: #1f2937; color: #e1e1e6; }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: #1f2937;
+            border: 1px solid #2a2d3a;
+            border-radius: 8px;
+            color: #e1e1e6;
+            font-size: 13px;
+            line-height: 1.6;
+            outline: none;
+            resize: vertical;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            transition: border-color 0.2s;
+        }
+        .form-textarea:focus { border-color: #22d3ee; }
+        .form-textarea::-webkit-scrollbar { width: 4px; }
+        .form-textarea::-webkit-scrollbar-track { background: transparent; }
+        .form-textarea::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 2px; }
+        .form-textarea::-webkit-scrollbar-thumb:hover { background: #3a3d4a; }
+        .form-textarea { scrollbar-width: thin; scrollbar-color: #2a2d3a transparent; }
+
+        .save-indicator {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 10px 20px;
+            background: #065f46;
+            color: #10b981;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .save-indicator.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ─── Published URL Banner ─── */
+        .publish-banner {
+            background: #064e3b;
+            border: 1px solid #10b981;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            display: none;
+        }
+        .publish-banner.visible { display: block; }
+        .publish-banner .title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #10b981;
+            margin-bottom: 6px;
+        }
+        .publish-banner .url-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .publish-banner .url-text {
+            flex: 1;
+            padding: 8px 12px;
+            background: #0f1117;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #6ee7b7;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .publish-banner .copy-btn {
+            padding: 8px 14px;
+            background: #10b981;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .publish-banner .copy-btn:hover { background: #059669; }
+
+        /* ─── Chat Window (Talk to Assistant) ─── */
+        .chat-panel {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .chat-panel.visible {
+            display: flex;
+        }
+
+        .chat-header-bar {
+            background: linear-gradient(135deg, #36616870, #36616870);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .chat-header-bar .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #22d3ee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .chat-header-bar .info { flex: 1; }
+        .chat-header-bar .info h3 { font-size: 16px; font-weight: 600; }
+        .chat-header-bar .info span { font-size: 12px; opacity: 0.85; }
+        .chat-back-btn {
+            background: #28474c00;
+            border: 1px solid #22d3ee;
+            color: #22d3ee;
+            padding: 6px 14px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .chat-back-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #1a1d2e;
+            min-height: 0;
+        }
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 2px; }
+
+        .chat-msg {
+            max-width: 80%;
+            padding: 10px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.45;
+            animation: msgIn 0.2s ease;
+        }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-msg.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #22d3ee, #0891b2);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-msg.ai {
+            align-self: flex-start;
+            background: #252838;
+            color: #e1e1e6;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-msg.ai .avatar-sm {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: #22d3ee;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 10px; color: #0f1117; margin-right: 6px; vertical-align: middle;
+        }
+        .chat-msg .time {
+            font-size: 11px; opacity: 0.5; margin-top: 4px;
+        }
+        .chat-msg.interim {
+            align-self: flex-end;
+            background: rgba(34, 211, 238, 0.1);
+            color: #6b7280;
+            border: 1px dashed #22d3ee;
+            font-style: italic;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-msg.thinking {
+            align-self: flex-start;
+            background: #252838;
+            color: #6b7280;
+            font-style: italic;
+            animation: blink 1s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0.4; }
+            50%      { opacity: 1; }
+        }
+
+        .chat-status-bar {
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            padding: 4px;
+            background: #161821;
+            display: none;
+        }
+        .chat-status-bar.visible { display: block; }
+        .chat-status-bar.listening { color: #22d3ee; }
+        .chat-status-bar.thinking  { color: #9ca3af; }
+        .chat-status-bar.speaking  { color: #10b981; }
+
+        .chat-input-row {
+            padding: 12px 16px 16px;
+            background: #1a1d2e;
+            border-top: 1px solid #2a2d3a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 0 0 16px 16px;
+        }
+        .chat-input-row input {
+            flex: 1;
+            border: 2px solid #2a2d3a;
+            border-radius: 24px;
+            padding: 10px 18px;
+            font-size: 14px;
+            outline: none;
+            background: #252838;
+            color: #e1e1e6;
+        }
+        .chat-input-row input:focus { border-color: #22d3ee; }
+        .chat-input-row input::placeholder { color: #4b5563; }
+
+        .chat-icon-btn {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            border: 2px solid #22d3ee;
+            background: transparent;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .chat-icon-btn:hover { background: #164e63; }
+        .chat-icon-btn svg { width: 20px; height: 20px; fill: #22d3ee; }
+
+        .chat-icon-btn.call-active {
+            background: #dc2626;
+            border-color: #dc2626;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .chat-icon-btn.call-active svg { fill: white; }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); }
+            50%      { box-shadow: 0 0 0 10px rgba(220,38,38,0); }
+        }
+
+        .chat-send-btn {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: #22d3ee;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .chat-send-btn:hover { background: #0891b2; }
+        .chat-send-btn svg { width: 18px; height: 18px; fill: #0f1117; }
+
+        /* ─── Empty State ─── */
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #4b5563;
+            font-size: 15px;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .empty-state .icon { opacity: 0.3; color: #6b7280; }
+        .empty-state .icon svg { width: 48px; height: 48px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* ─── Toast Notification ─── */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success {
+            background: #065f46;
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+        .toast.error {
+            background: #7f1d1d;
+            color: #fca5a5;
+            border: 1px solid #ef4444;
+        }
+
+        /* ─── Call Logs Page ─── */
+        .cl-stats-row {
+            display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .cl-stat-card {
+            flex: 1; min-width: 100px;
+            background: #161821; border: 1px solid #2a2d3a; border-radius: 10px;
+            padding: 12px 16px; text-align: center;
+        }
+        .cl-stat-value { font-size: 22px; font-weight: 700; color: #e1e1e6; }
+        .cl-stat-label { font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+        .cl-stat-green .cl-stat-value { color: #22c55e; }
+        .cl-stat-red .cl-stat-value { color: #ef4444; }
+        .cl-stat-cyan .cl-stat-value { color: #22d3ee; }
+
+        .cl-filters-row {
+            display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end;
+        }
+        .cl-filter { display: flex; flex-direction: column; gap: 3px; }
+        .cl-filter label { font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; }
+        .cl-filter input, .cl-filter select {
+            padding: 6px 10px; background: #1f2937; border: 1px solid #2a2d3a;
+            border-radius: 6px; color: #e1e1e6; font-size: 12px; outline: none;
+            min-width: 120px;
+        }
+        .cl-filter input:focus, .cl-filter select:focus { border-color: #22d3ee; }
+
+        .cl-table { width: 100%; border-collapse: collapse; }
+        .cl-table thead { position: sticky; top: 0; z-index: 2; }
+        .cl-table th {
+            padding: 10px 16px; background: #161821; border-bottom: 1px solid #2a2d3a;
+            font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; text-align: left;
+        }
+        .cl-table td {
+            padding: 12px 16px; border-bottom: 1px solid #1e2030; font-size: 13px; color: #e1e1e6;
+        }
+        .cl-table tbody tr { cursor: pointer; transition: background 0.15s; }
+        .cl-table tbody tr:hover { background: #1f2937; }
+        .cl-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+        }
+
+        #callLogList::-webkit-scrollbar { display: none; }
+
+        .cl-detail-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99;
+        }
+        .cl-detail-overlay.open { display: block; }
+        .cl-detail-panel {
+            position: fixed; top: 0; right: -480px; width: 460px; max-width: 90vw; height: 100vh;
+            background: #161821; border-left: 1px solid #2a2d3a; z-index: 100;
+            display: flex; flex-direction: column; transition: right 0.3s ease;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+        }
+        .cl-detail-panel.open { right: 0; }
+        .cl-detail-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid #2a2d3a;
+        }
+        .cl-detail-header h2 { font-size: 16px; font-weight: 600; color: #e1e1e6; }
+        .cl-detail-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 1024px) {
+            .nav-rail { width: 68px; align-items: center; }
+            .nav-rail .nav-brand,
+            .nav-rail .nav-section-label,
+            .nav-rail .nav-item .nav-label,
+            .nav-rail .nav-collapse-btn { display: none; }
+            .nav-rail .nav-item { margin: 1px 8px; padding: 12px 0; justify-content: center; gap: 0; }
+            .sidebar { width: 220px; }
+            .content-area { padding: 16px; }
+            .settings-panel { max-width: 100%; }
+            .setting-row { flex-direction: column; gap: 0; }
+        }
+        @media (max-width: 768px) {
+            .app-layout { flex-direction: column; height: auto; min-height: 100vh; }
+            .nav-rail {
+                width: 100% !important; height: auto; flex-direction: row;
+                border-right: none; border-bottom: 1px solid #1e2030;
+                padding: 4px 8px; overflow-x: auto; gap: 0;
+            }
+            .nav-rail .nav-header { display: none; }
+            .nav-rail .nav-section-label { display: none; }
+            .nav-rail .nav-spacer { display: none; }
+            .nav-rail .nav-item {
+                margin: 0; padding: 10px 12px; border-radius: 8px;
+                flex-shrink: 0; justify-content: center;
+            }
+            .nav-rail .nav-item .nav-label { display: none; }
+            .nav-rail .nav-item .nav-icon { width: auto; }
+            .nav-rail .nav-item.active::before { display: none; }
+            .page-panel { height: auto; min-height: calc(100vh - 56px); }
+            .page-panel.active { display: flex; }
+            /* Assistants page */
+            #page-assistants { flex-direction: column; }
+            #page-assistants .sidebar { width: 100%; max-height: 200px; border-right: none; border-bottom: 1px solid #2a2d3a; }
+            #page-assistants .main-area { min-height: 0; flex: 1; }
+            .main-header { flex-wrap: wrap; padding: 10px 12px; }
+            .header-actions { width: 100%; justify-content: flex-end; flex-wrap: wrap; gap: 4px; }
+            .header-btn { padding: 6px 10px; font-size: 11px; }
+            .tabs { padding: 0 8px; overflow-x: auto; }
+            .tab { padding: 10px 12px; font-size: 12px; white-space: nowrap; }
+            .content-area { padding: 12px; }
+            .chat-panel { max-width: 100%; }
+            /* Call logs */
+            .cl-stats-row { gap: 6px; }
+            .cl-stat-card { min-width: 70px; padding: 8px 10px; }
+            .cl-stat-value { font-size: 16px; }
+            .cl-filters-row { gap: 6px; }
+            .cl-filter input, .cl-filter select { min-width: 90px; font-size: 11px; }
+            .cl-table th, .cl-table td { padding: 8px 10px; font-size: 11px; }
+            .cl-detail-panel { width: 100%; max-width: 100vw; }
+            /* Outbound call */
+            #page-call .outbound-flex { flex-direction: column !important; }
+        }
+        @media (max-width: 480px) {
+            .cl-stats-row { flex-wrap: wrap; }
+            .cl-stat-card { min-width: calc(50% - 6px); }
+            .cl-filters-row { flex-direction: column; }
+            .cl-filter { width: 100%; }
+            .cl-filter input, .cl-filter select { width: 100%; min-width: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- ─── Nav Rail ─── -->
+    <div class="nav-rail" id="navRail">
+        <div class="nav-header">
+            <div class="nav-logo">AI</div>
+            <span class="nav-brand">CallFlow AI</span>
+            <button class="nav-collapse-btn" id="navCollapseBtn" title="Collapse sidebar">◀</button>
+        </div>
+        <div class="nav-section-label">Main</div>
+        <div class="nav-item active" data-nav="assistants">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M4 21v-2a4 4 0 0 1 3-3.87"/><circle cx="12" cy="17" r="4"/></svg></span>
+            <span class="nav-label">Assistants</span>
+        </div>
+        <div class="nav-item" data-nav="call">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/><line x1="15" y1="2" x2="22" y2="2"/><line x1="18.5" y1="2" x2="18.5" y2="8"/><line x1="15" y1="5" x2="22" y2="5"/></svg></span>
+            <span class="nav-label">Outbound Call</span>
+        </div>
+        <div class="nav-item" data-nav="phone">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
+            <span class="nav-label">Phone Numbers</span>
+        </div>
+        <div class="nav-item" data-nav="history">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+            <span class="nav-label">Call Logs</span>
+        </div>
+        <div class="nav-item" data-nav="voicelibrary">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="2" height="20" rx="1"/><rect x="5" y="6" width="2" height="12" rx="1"/><rect x="13" y="4" width="2" height="16" rx="1"/><rect x="1" y="9" width="2" height="6" rx="1"/><rect x="17" y="7" width="2" height="10" rx="1"/><rect x="21" y="10" width="2" height="4" rx="1"/></svg></span>
+            <span class="nav-label">Voice Library</span>
+        </div>
+        <div class="nav-item" data-nav="apikeys">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <span class="nav-label">API Keys</span>
+        </div>
+        <div class="nav-item" data-nav="integration">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2l-2 7h-7l5.5 4.5-2 7 5.5-4 5.5 4-2-7L21 9h-7z" fill="none"/><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+            <span class="nav-label">Integrations</span>
+        </div>
+        <div class="nav-spacer"></div>
+        <div class="nav-section-label">Account</div>
+        <div class="nav-item" data-nav="settings">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+            <span class="nav-label">Settings</span>
+        </div>
+    </div>
+
+    <!-- ─── Page: Assistants ─── -->
+    <div class="page-panel active" id="page-assistants">
+    <!-- ─── Sidebar ─── -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><span class="ico" style="vertical-align:middle; margin-right:6px;"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M4 21v-2a4 4 0 0 1 3-3.87"/><circle cx="12" cy="17" r="4"/></svg></span>Assistants</h2>
+        </div>
+        <button class="create-btn" id="createAssistantBtn">
+            <span class="icon">＋</span> Create Assistant
+        </button>
+        <div class="search-box">
+            <span class="search-icon"><svg style="width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="text" id="searchInput" placeholder="Search Assistants" />
+        </div>
+        <div class="assistant-list" id="assistantList">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+
+    <!-- ─── Main Area ─── -->
+    <div class="main-area" id="mainArea">
+        <!-- Empty state (shown when no assistant selected) -->
+        <div class="empty-state" id="emptyState">
+            <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M4 21v-2a4 4 0 0 1 3-3.87"/><circle cx="12" cy="17" r="4"/></svg></div>
+            <div>Select an assistant or create a new one</div>
+        </div>
+
+        <!-- Assistant Detail (hidden initially) -->
+        <div id="assistantDetail" style="display:none; flex-direction:column; height:100%;">
+            <!-- Main Header -->
+            <div class="main-header">
+                <h1 id="detailName">Assistant Name</h1>
+                <span class="assistant-id" id="detailId" title="Click to copy">ID: ---</span>
+                <div class="header-actions">
+                    <button class="header-btn delete-btn" id="deleteBtn"><span class="ico ico-sm"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span> Delete</button>
+                    <button class="header-btn talk-btn" id="talkBtn"><span class="ico ico-sm"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span> Talk to Assistant</button>
+                    <button class="header-btn publish-btn" id="publishBtn">Publish</button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs" id="tabsBar">
+                <div class="tab active" data-tab="model"><span class="tab-icon"><span class="ico ico-sm"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span></span> Model</div>
+                <div class="tab" data-tab="voice"><span class="tab-icon"><span class="ico ico-sm"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span></span> Voice</div>
+                <div class="tab" data-tab="advanced"><span class="tab-icon"><span class="ico ico-sm"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span></span> Advanced</div>
+            </div>
+
+            <!-- Content (settings or chat) -->
+            <div class="content-area" id="contentArea">
+                <!-- Settings panel -->
+                <div class="settings-panel" id="settingsPanel">
+                    <!-- Published URL Banner -->
+                    <!-- <div class="publish-banner" id="publishBanner"> -->
+                        <!-- <div class="title"><span class="ico ico-sm" style="color:#10b981; vertical-align:middle; margin-right:4px;"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span> Published — Use this URL to embed this assistant</div>
+                        <div class="url-row">
+                            <div class="url-text" id="publishUrl"></div>
+                            <button class="copy-btn" id="copyUrlBtn">Copy</button>
+                        </div>
+                    </div> -->
+
+                    <!-- Model Tab Content -->
+                    <div class="tab-content" id="tab-model">
+                        <div class="setting-row">
+                            <div class="setting-group">
+                                <label>Provider</label>
+                                <select class="form-select" disabled>
+                                    <option>OpenAI</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label>Model</label>
+                                <select class="form-select" id="fieldModel">
+                                    <option value="gpt-4o-mini">GPT 4o Mini</option>
+                                    <option value="gpt-4o">GPT 4o</option>
+                                    <option value="gpt-4-turbo">GPT 4 Turbo</option>
+                                    <option value="gpt-3.5-turbo">GPT 3.5 Turbo</option>
+                                    <option value="o1-mini">o1-mini</option>
+                                    <option value="o1-preview">o1-preview</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>First Message Mode</label>
+                            <div class="hint"><span class="info-icon">i</span> The greeting the assistant speaks when a call begins</div>
+                            <select class="form-select" disabled>
+                                <option>Assistant speaks first</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-group">
+                                <label>Temperature</label>
+                                <div class="hint"><span class="info-icon">i</span> Controls randomness (0 = deterministic, 1 = creative)</div>
+                                <input type="number" class="form-input" id="fieldTemperature" min="0" max="2" step="0.1" value="0.7" />
+                            </div>
+                            <div class="setting-group">
+                                <label>Max Tokens</label>
+                                <div class="hint"><span class="info-icon">i</span> Maximum length of the AI response</div>
+                                <input type="number" class="form-input" id="fieldMaxTokens" min="50" max="4096" step="50" value="200" />
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>First Message</label>
+                            <input type="text" class="form-input" id="fieldFirstMessage" placeholder="Hello! How can I help you today?" />
+                        </div>
+
+                        <div class="setting-group">
+                            <label>System Prompt</label>
+                            <div class="hint"><span class="info-icon">i</span> Instructions that define how the assistant behaves</div>
+                            <textarea class="form-textarea" id="fieldSystemPrompt" rows="12" placeholder="You are a helpful assistant..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Voice Tab Content -->
+                    <div class="tab-content" id="tab-voice" style="display:none;">
+                        <div class="setting-group">
+                            <label>STT Provider</label>
+                            <div class="hint"><span class="info-icon">i</span> Speech-to-Text provider for transcribing user speech</div>
+                            <select class="form-select" id="fieldSTTProvider" onchange="onSTTProviderChange()">
+                                <option value="deepgram">Deepgram</option>
+                                <option value="sarvam">Sarvam AI</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>STT Model (Transcriber)</label>
+                            <div class="hint"><span class="info-icon">i</span> Speech-to-Text model for transcribing user speech</div>
+                            <select class="form-select" id="fieldSTT">
+                                <option value="nova-2">Nova-2 (Best quality)</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>TTS Provider</label>
+                            <div class="hint"><span class="info-icon">i</span> Text-to-Speech provider for the assistant's voice</div>
+                            <select class="form-select" id="fieldTTSProvider" onchange="onTTSProviderChange()">
+                                <option value="deepgram">Deepgram</option>
+                                <option value="sarvam">Sarvam AI</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>TTS Model (Voice)</label>
+                            <div class="hint"><span class="info-icon">i</span> Text-to-Speech voice model for the assistant's voice</div>
+                            <select class="form-select" id="fieldTTS">
+                                <option value="aura-asteria-en">Asteria (Female, US English)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Tab Content -->
+                    <div class="tab-content" id="tab-advanced" style="display:none;">
+                        <div class="setting-group">
+                            <label>Assistant Name</label>
+                            <input type="text" class="form-input" id="fieldName" placeholder="Assistant Name" />
+                        </div>
+
+                        <div class="setting-group">
+                            <label>Assistant ID</label>
+                            <input type="text" class="form-input" id="fieldIdDisplay" disabled />
+                        </div>
+
+                        <div class="setting-group">
+                            <label>Created</label>
+                            <input type="text" class="form-input" id="fieldCreated" disabled />
+                        </div>
+
+                        <div class="setting-group">
+                            <label>Last Updated</label>
+                            <input type="text" class="form-input" id="fieldUpdated" disabled />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat panel (Talk to Assistant) -->
+                <div class="chat-panel" id="chatPanel">
+                    <div class="chat-header-bar">
+                        <div class="avatar" id="chatAvatar"><svg style="width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><circle cx="12" cy="17" r="4"/></svg></div>
+                        <div class="info">
+                            <h3 id="chatNameLabel">Assistant</h3>
+                            <span id="chatHeaderStatus">Online</span>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-left:auto;">
+                            <button class="chat-back-btn" id="chatNewChatBtn" style="background:#28474c00; color:#22d3ee;"><span class="ico ico-sm" style="margin-right:3px;"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></span> New Chat</button>
+                            <button class="chat-back-btn" id="chatBackBtn"><span class="ico ico-sm" style="margin-right:3px;"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></span> Back to Settings</button>
+                        </div>
+                    </div>
+                    <div class="chat-status-bar" id="chatStatusBar"></div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-row">
+                        <button class="chat-icon-btn" id="chatCallBtn" title="Voice call">
+                            <svg viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+                        </button>
+                        <input type="text" id="chatTextInput" placeholder="Type your message..." />
+                        <button class="chat-send-btn" id="chatSendBtn" title="Send">
+                            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div><!-- end page-assistants -->
+
+    <!-- ─── Page: Outbound Call ─── -->
+    <div class="page-panel" id="page-call">
+        <div style="flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden;">
+            <!-- Header -->
+            <div style="padding:20px 32px 0; border-bottom:1px solid #2a2d3a;">
+                <h1 style="font-size:22px; font-weight:700; color:#e1e1e6; margin-bottom:4px;"><span class="ico" style="vertical-align:middle; margin-right:6px;"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/><line x1="15" y1="2" x2="22" y2="2"/><line x1="18.5" y1="2" x2="18.5" y2="8"/><line x1="15" y1="5" x2="22" y2="5"/></svg></span>Outbound Calls</h1>
+                <!-- <p style="font-size:13px; color:#6b7280; margin-bottom:16px;">Call any phone number using your own AI Voice Agent (Deepgram STT → OpenAI → Deepgram TTS) via Twilio</p> -->
+            </div>
+
+            <div class="outbound-flex" style="flex:1; overflow-y:auto; padding:24px 32px; display:flex; gap:24px; align-content:flex-start;">
+
+                <!-- Left: Call Form -->
+                <div style="flex:1; min-width:0;">
+                    <!-- Public URL (ngrok) banner -->
+                    <!-- <div id="publicUrlBanner" style="background:#1c1507; border:1px solid #854d0e; border-radius:10px; padding:14px 18px; margin-bottom:16px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                            <span style="font-size:16px;">🌐</span>
+                            <span style="font-size:13px; font-weight:600; color:#fbbf24;">Public URL (required)</span>
+                            <span id="publicUrlStatusBadge" style="margin-left:auto; font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; background:#450a0a; color:#ef4444;">NOT SET</span>
+                        </div>
+                        <div style="font-size:11px; color:#a3842c; margin-bottom:10px; line-height:1.5;">
+                            Twilio needs a public URL to reach your server. Run <code style="background:#2a2008; padding:1px 5px; border-radius:3px; color:#fbbf24;">ngrok http 5000</code> in a terminal, then paste the HTTPS URL below. It will also auto-detect if ngrok is running.
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <input type="text" id="publicUrlInput" placeholder="https://abc123.ngrok-free.app" style="flex:1; padding:8px 12px; background:#1f2937; border:1px solid #2a2d3a; border-radius:6px; color:#e1e1e6; font-size:12px; outline:none; font-family:monospace;" />
+                            <button onclick="setPublicUrl()" style="padding:8px 16px; background:#854d0e; border:none; border-radius:6px; color:#fbbf24; font-size:12px; font-weight:600; cursor:pointer;">Set URL</button>
+                        </div>
+                        <div id="publicUrlResult" style="display:none; margin-top:8px; font-size:11px; padding:6px 10px; border-radius:6px;"></div>
+                    </div> -->
+
+                    <div style="background:#161821; border:1px solid #2a2d3a; border-radius:14px; padding:24px;">
+                        <h2 style="font-size:16px; font-weight:600; color:#e1e1e6; margin-bottom:4px;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:4px;"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span> Make a Call</h2>
+                        <p style="font-size:12px; color:#4b5563; margin-bottom:18px;">Your voice agent will answer and talk to the person on the phone in real-time</p>
+
+                        <!-- Phone Number -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:12px; font-weight:600; color:#9ca3af; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Phone Number *</label>
+                            <input type="tel" id="callPhoneNumber" placeholder="+91 9876543210" style="width:100%; padding:10px 14px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:14px; outline:none; font-family:monospace;" />
+                            <div style="font-size:11px; color:#4b5563; margin-top:4px;">Include country code (e.g. +91 for India, +1 for US)</div>
+                        </div>
+
+                        <!-- Customer Name -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:12px; font-weight:600; color:#9ca3af; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Customer Name</label>
+                            <input type="text" id="callCustomerName" placeholder="John Doe" style="width:100%; padding:10px 14px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:14px; outline:none;" />
+                        </div>
+
+                        <!-- Assistant Selection -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:12px; font-weight:600; color:#9ca3af; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">AI Assistant</label>
+                            <select id="callAssistant" style="width:100%; padding:10px 14px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:13px; outline:none;">
+                                <option value="">Default Voice Agent</option>
+                            </select>
+                            <div style="font-size:11px; color:#4b5563; margin-top:4px;">Pick one of your assistants — its system prompt, model, and voice will be used for the call</div>
+                        </div>
+
+                        <!-- Greeting -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:12px; font-weight:600; color:#9ca3af; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Greeting Message <span style="color:#4b5563;">(optional)</span></label>
+                            <input type="text" id="callGreeting" placeholder="Hello! I'm calling from..." style="width:100%; padding:10px 14px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:13px; outline:none;" />
+                            <div style="font-size:11px; color:#4b5563; margin-top:4px;">What the AI says first when the person picks up. Defaults to assistant's first message.</div>
+                        </div>
+
+                        <!-- Custom System Prompt override -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:12px; font-weight:600; color:#9ca3af; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">System Prompt Override <span style="color:#4b5563;">(optional)</span></label>
+                            <textarea id="callSystemPrompt" rows="3" placeholder="Leave empty to use assistant's prompt..." style="width:100%; padding:10px 14px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:13px; outline:none; resize:vertical; font-family:inherit;"></textarea>
+                        </div>
+
+                        <!-- From Number -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:12px; font-weight:600; color:#9ca3af; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Twilio From Number <span style="color:#4b5563;">(optional)</span></label>
+                            <input type="tel" id="callFromNumber" placeholder="Uses default from .env" style="width:100%; padding:10px 14px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:14px; outline:none; font-family:monospace;" />
+                        </div>
+
+                        <!-- Call button -->
+                        <button id="makeCallBtn" onclick="makeOutboundCall()" style="width:100%; padding:14px; background:transparent; border:1px solid #22d3ee; border-radius:10px; color:#22d3ee; font-size:15px; font-weight:700; cursor:pointer; transition:all .2s; margin-top:8px;">
+                            <span class="ico ico-sm" style="vertical-align:middle; margin-right:4px;"><svg viewBox="0 0 24 24" style="stroke:#22d3ee;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span> Call with AI Voice Agent
+                        </button>
+
+                        <!-- Call result -->
+                        <div id="callResult" style="display:none; margin-top:16px; padding:14px; border-radius:10px; font-size:13px; line-height:1.6;"></div>
+                    </div>
+
+                    <!-- Status cards -->
+                    <!-- <div style="display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:100px; background:#161821; border:1px solid #2a2d3a; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:4px;">Public URL</div>
+                            <div id="publicUrlStatus" style="font-size:12px; color:#6b7280;">Checking...</div>
+                        </div>
+                        <div style="flex:1; min-width:100px; background:#161821; border:1px solid #2a2d3a; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:4px;">Twilio</div>
+                            <div id="twilioStatus" style="font-size:12px; color:#6b7280;">Checking...</div>
+                        </div>
+                        <div style="flex:1; min-width:100px; background:#161821; border:1px solid #2a2d3a; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:4px;">Deepgram</div>
+                            <div id="deepgramCallStatus" style="font-size:12px; color:#6b7280;">Checking...</div>
+                        </div>
+                        <div style="flex:1; min-width:100px; background:#161821; border:1px solid #2a2d3a; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:4px;">OpenAI</div>
+                            <div id="openaiCallStatus" style="font-size:12px; color:#6b7280;">Checking...</div>
+                        </div>
+                        <div style="flex:1; min-width:100px; background:#161821; border:1px solid #2a2d3a; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:4px;">WebSocket</div>
+                            <div id="wsCallStatus" style="font-size:12px; color:#6b7280;">Checking...</div>
+                        </div>
+                    </div> -->
+
+                    <!-- How it works -->
+                    <!-- <div style="background:#161821; border:1px solid #2a2d3a; border-radius:10px; padding:16px; margin-top:16px;">
+                        <div style="font-size:13px; font-weight:600; color:#9ca3af; margin-bottom:10px;">How it works</div>
+                        <div style="font-size:12px; color:#6b7280; line-height:1.8;">
+                            <div>1️⃣ Twilio dials the phone number</div>
+                            <div>2️⃣ When answered, a real-time audio stream connects to your server</div>
+                            <div>3️⃣ Deepgram transcribes the caller's speech (STT)</div>
+                            <div>4️⃣ OpenAI generates a response using your assistant's prompt (LLM)</div>
+                            <div>5️⃣ Deepgram converts the response to speech (TTS)</div>
+                            <div>6️⃣ Audio is streamed back to the phone call in real-time</div>
+                        </div>
+                    </div> -->
+
+                </div>
+
+                <!-- Right: Call History -->
+                <div style="flex:1; min-width:0;">
+                    <div style="background:#161821; border:1px solid #2a2d3a; border-radius:14px; padding:24px; max-height:calc(100vh - 160px); display:flex; flex-direction:column;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                            <h2 style="font-size:16px; font-weight:600; color:#e1e1e6;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:4px;"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Recent Calls</h2>
+                            <button onclick="loadCallLog()" style="padding:6px 12px; background:#1f2937; border:1px solid #2a2d3a; border-radius:6px; color:#9ca3af; cursor:pointer; font-size:12px;">Refresh</button>
+                        </div>
+                        <div id="callLogList" style="flex:1; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none;">
+                            <div style="text-align:center; color:#4b5563; padding:40px 0; font-size:13px;">
+                                <div style="opacity:0.3; margin-bottom:12px;"><svg style="width:36px; height:36px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+                                No calls yet. Make your first outbound call!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Page: Phone Numbers ─── -->
+    <div class="page-panel" id="page-phone">
+        <div style="flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden;">
+            <div style="padding:20px 32px 0; border-bottom:1px solid #2a2d3a;">
+                <h1 style="font-size:22px; font-weight:700; color:#e1e1e6; margin-bottom:4px;"><span class="ico" style="vertical-align:middle; margin-right:6px;"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>Phone Numbers</h1>
+                <p style="font-size:13px; color:#6b7280; margin-bottom:16px;">Connect your telephony providers and manage phone numbers</p>
+            </div>
+
+            <div style="flex:1; overflow-y:auto; padding:24px 32px; scrollbar-width:none; -ms-overflow-style:none;">
+                <div class="outbound-flex" style="display:flex; gap:24px; align-items:flex-start;">
+
+                    <!-- ── Twilio Integration ── -->
+                    <div style="flex:1; min-width:0;">
+                        <div style="background:#161821; border:1px solid #2a2d3a; border-radius:14px; padding:24px; margin-bottom:20px;">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
+                                <div style="width:44px; height:44px; background:#1a1520; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                                    <svg style="width:24px; height:24px; fill:none; stroke:#ef4444; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                </div>
+                                <div>
+                                    <h2 style="font-size:16px; font-weight:600; color:#e1e1e6; margin:0;">Twilio</h2>
+                                    <p style="font-size:11px; color:#6b7280; margin:0;">Voice, SMS &amp; Phone Numbers</p>
+                                </div>
+                                <span id="twilioConnBadge" style="margin-left:auto; font-size:10px; font-weight:700; padding:3px 10px; border-radius:5px; background:#450a0a; color:#ef4444;">NOT CONNECTED</span>
+                            </div>
+
+                            <div id="twilioCredForm">
+                                <div style="margin-bottom:14px;">
+                                    <label style="display:block; font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Account SID</label>
+                                    <input type="text" id="twilioSidInput" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%; padding:9px 12px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:13px; outline:none; font-family:monospace;" />
+                                </div>
+                                <div style="margin-bottom:14px;">
+                                    <label style="display:block; font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Auth Token</label>
+                                    <input type="password" id="twilioTokenInput" placeholder="••••••••••••••••••••••••••••" style="width:100%; padding:9px 12px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:13px; outline:none; font-family:monospace;" />
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="connectProvider('twilio')" id="twilioConnBtn" style="flex:1; padding:10px; background:transparent; border:1px solid #ef4444; border-radius:8px; color:#ef4444; font-size:13px; font-weight:600; cursor:pointer;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:3px;"><svg viewBox="0 0 24 24" style="stroke:#ef4444;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span> Connect Twilio</button>
+                                    <button onclick="disconnectProvider('twilio')" id="twilioDiscBtn" style="padding:10px 14px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#9ca3af; font-size:13px; cursor:pointer; display:none;">Disconnect</button>
+                                </div>
+                            </div>
+                            <div id="twilioStatus" style="margin-top:12px; font-size:12px; display:none; padding:10px 14px; border-radius:8px;"></div>
+                        </div>
+
+                        <!-- Twilio Numbers List -->
+                        <div id="twilioNumbersPanel" style="background:#161821; border:1px solid #2a2d3a; border-radius:14px; padding:24px; display:none;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                                <h3 style="font-size:14px; font-weight:600; color:#e1e1e6;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:4px;"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span> Twilio Phone Numbers</h3>
+                                <button onclick="refreshNumbers('twilio')" style="padding:5px 10px; background:transparent; border:1px solid #2a2d3a; border-radius:6px; color:#9ca3af; cursor:pointer; font-size:11px;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:2px;"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg></span> Refresh</button>
+                            </div>
+                            <div id="twilioNumbersList" style="font-size:13px; color:#6b7280;">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- ── Vobiz Integration ── -->
+                    <div style="flex:1; min-width:0;">
+                        <div style="background:#161821; border:1px solid #2a2d3a; border-radius:14px; padding:24px; margin-bottom:20px;">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
+                                <div style="width:44px; height:44px; background:#0c1a2a; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                                    <svg style="width:24px; height:24px; fill:none; stroke:#22c55e; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                </div>
+                                <div>
+                                    <h2 style="font-size:16px; font-weight:600; color:#e1e1e6; margin:0;">Vobiz</h2>
+                                    <p style="font-size:11px; color:#6b7280; margin:0;">Voice AI Infrastructure — <a href="https://vobiz.ai" target="_blank" style="color:#22d3ee; text-decoration:none;">vobiz.ai</a></p>
+                                </div>
+                                <span id="vobizConnBadge" style="margin-left:auto; font-size:10px; font-weight:700; padding:3px 10px; border-radius:5px; background:#450a0a; color:#ef4444;">NOT CONNECTED</span>
+                            </div>
+
+                            <div id="vobizCredForm">
+                                <div style="margin-bottom:14px;">
+                                    <label style="display:block; font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Auth ID</label>
+                                    <input type="text" id="vobizAuthIdInput" placeholder="VOBIZ_ABC123XY..." style="width:100%; padding:9px 12px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:13px; outline:none; font-family:monospace;" />
+                                </div>
+                                <div style="margin-bottom:14px;">
+                                    <label style="display:block; font-size:11px; font-weight:600; color:#9ca3af; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Auth Token</label>
+                                    <input type="password" id="vobizTokenInput" placeholder="••••••••••••••••••••••••••••" style="width:100%; padding:9px 12px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#e1e1e6; font-size:13px; outline:none; font-family:monospace;" />
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="connectProvider('vobiz')" id="vobizConnBtn" style="flex:1; padding:10px; background:transparent; border:1px solid #22c55e; border-radius:8px; color:#22c55e; font-size:13px; font-weight:600; cursor:pointer;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:3px;"><svg viewBox="0 0 24 24" style="stroke:#22c55e;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span> Connect Vobiz</button>
+                                    <button onclick="disconnectProvider('vobiz')" id="vobizDiscBtn" style="padding:10px 14px; background:#1f2937; border:1px solid #2a2d3a; border-radius:8px; color:#9ca3af; font-size:13px; cursor:pointer; display:none;">Disconnect</button>
+                                </div>
+                            </div>
+                            <div id="vobizStatus" style="margin-top:12px; font-size:12px; display:none; padding:10px 14px; border-radius:8px;"></div>
+                        </div>
+
+                        <!-- Vobiz Numbers List -->
+                        <div id="vobizNumbersPanel" style="background:#161821; border:1px solid #2a2d3a; border-radius:14px; padding:24px; display:none;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                                <h3 style="font-size:14px; font-weight:600; color:#e1e1e6;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:4px;"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span> Vobiz Phone Numbers</h3>
+                                <button onclick="refreshNumbers('vobiz')" style="padding:5px 10px; background:transparent; border:1px solid #2a2d3a; border-radius:6px; color:#9ca3af; cursor:pointer; font-size:11px;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:2px;"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg></span> Refresh</button>
+                            </div>
+                            <div id="vobizNumbersList" style="font-size:13px; color:#6b7280;">Loading...</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Page: Call Logs ─── -->
+    <div class="page-panel" id="page-history">
+        <div style="flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden;">
+            <!-- Header -->
+            <div style="padding:16px 24px 0; border-bottom:1px solid #2a2d3a;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                    <h1 style="font-size:20px; font-weight:700; color:#e1e1e6; margin:0;"><span class="ico" style="vertical-align:middle; margin-right:6px;"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>Call Logs</h1>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="migrateLogsToSupabase()" id="migrateBtn" style="padding:6px 14px; background:transparent; border:1px solid #2a4a7f; border-radius:8px; color:#60a5fa; cursor:pointer; font-size:12px; font-weight:500;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:3px;"><svg viewBox="0 0 24 24" style="stroke:#60a5fa;"><polyline points="17 11 12 6 7 11"/><line x1="12" y1="18" x2="12" y2="6"/></svg></span> Migrate Local → Supabase</button>
+                        <button onclick="loadCallLogs()" style="padding:6px 14px; background:transparent; border:1px solid #2a2d3a; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:12px; font-weight:500;"><span class="ico ico-sm" style="vertical-align:middle; margin-right:2px;"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg></span> Refresh</button>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="cl-stats-row" id="clStatsRow">
+                    <div class="cl-stat-card">
+                        <div class="cl-stat-value" id="statTotal">0</div>
+                        <div class="cl-stat-label">Total Calls</div>
+                    </div>
+                    <div class="cl-stat-card cl-stat-green">
+                        <div class="cl-stat-value" id="statAnswered">0</div>
+                        <div class="cl-stat-label">Answered</div>
+                    </div>
+                    <div class="cl-stat-card cl-stat-red">
+                        <div class="cl-stat-value" id="statUnanswered">0</div>
+                        <div class="cl-stat-label">Unanswered</div>
+                    </div>
+                    <div class="cl-stat-card cl-stat-cyan">
+                        <div class="cl-stat-value" id="statDuration">0m</div>
+                        <div class="cl-stat-label">Total Duration</div>
+                    </div>
+                </div>
+
+                <!-- Filters Row -->
+                <div class="cl-filters-row">
+                    <div class="cl-filter">
+                        <label>Date</label>
+                        <input type="date" id="clFilterDate" onchange="applyCallLogFilters()" />
+                    </div>
+                    <div class="cl-filter">
+                        <label>Assistant</label>
+                        <select id="clFilterAssistant" onchange="applyCallLogFilters()">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                    <div class="cl-filter">
+                        <label>Phone</label>
+                        <input type="text" id="clFilterPhone" placeholder="Search number..." oninput="applyCallLogFilters()" />
+                    </div>
+                    <div class="cl-filter">
+                        <label>Type</label>
+                        <select id="clFilterType" onchange="applyCallLogFilters()">
+                            <option value="">All</option>
+                            <option value="outbound">Outbound</option>
+                            <option value="chat">Chat</option>
+                        </select>
+                    </div>
+                    <div class="cl-filter">
+                        <label>Status</label>
+                        <select id="clFilterStatus" onchange="applyCallLogFilters()">
+                            <option value="">All</option>
+                            <option value="completed">Completed</option>
+                            <option value="busy">Busy</option>
+                            <option value="no-answer">No Answer</option>
+                            <option value="failed">Failed</option>
+                            <option value="queued">Queued</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call Log Table -->
+            <div style="flex:1; overflow-y:auto; padding:0;" id="clTableWrap">
+                <table class="cl-table" id="clTable">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Customer</th>
+                            <th>Phone Number</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                            <th>Date</th>
+                            <th>Transcript</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clTableBody">
+                        <tr><td colspan="7" style="text-align:center; padding:40px; color:#4b5563;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Detail slide-over -->
+        <div class="cl-detail-overlay" id="clDetailOverlay" onclick="closeCallLogDetail()"></div>
+        <div class="cl-detail-panel" id="clDetailPanel">
+            <div class="cl-detail-header">
+                <h2 id="clDetailTitle">Call Details</h2>
+                <button onclick="closeCallLogDetail()" style="background:none; border:none; color:#9ca3af; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div class="cl-detail-body" id="clDetailBody"></div>
+        </div>
+    </div>
+
+    <!-- ─── Page: Settings ─── -->
+    <div class="page-panel" id="page-settings">
+        <div class="placeholder-page">
+            <div class="ph-icon"><svg style="width:48px; height:48px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+            <div class="ph-title">Settings</div>
+            <div class="ph-desc">Manage API keys, billing, team members, webhooks, and other account-level configuration.</div>
+            <div class="ph-badge">Coming Soon</div>
+        </div>
+    </div>
+
+    <!-- ─── Page: Voice Library ─── -->
+    <div class="page-panel" id="page-voicelibrary">
+        <div class="placeholder-page">
+            <div class="ph-icon"><svg style="width:48px; height:48px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><rect x="9" y="2" width="2" height="20" rx="1"/><rect x="5" y="6" width="2" height="12" rx="1"/><rect x="13" y="4" width="2" height="16" rx="1"/><rect x="1" y="9" width="2" height="6" rx="1"/><rect x="17" y="7" width="2" height="10" rx="1"/><rect x="21" y="10" width="2" height="4" rx="1"/></svg></div>
+            <div class="ph-title">Voice Library</div>
+            <div class="ph-desc">Browse, preview, and manage custom voices. Clone voices, adjust speaking styles, and assign them to your assistants.</div>
+            <div class="ph-badge">Coming Soon</div>
+        </div>
+    </div>
+
+    <!-- ─── Page: API Keys ─── -->
+    <div class="page-panel" id="page-apikeys">
+        <div class="placeholder-page">
+            <div class="ph-icon"><svg style="width:48px; height:48px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <div class="ph-title">API Keys</div>
+            <div class="ph-desc">Generate and manage API keys for programmatic access. Control permissions, set rate limits, and track usage.</div>
+            <div class="ph-badge">Coming Soon</div>
+        </div>
+    </div>
+
+    <!-- ─── Page: Integrations ─── -->
+    <div class="page-panel" id="page-integration">
+        <div class="placeholder-page">
+            <div class="ph-icon"><svg style="width:48px; height:48px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+            <div class="ph-title">Integrations</div>
+            <div class="ph-desc">Connect with third-party services like CRMs, helpdesks, calendars, and messaging platforms to extend your assistant's capabilities.</div>
+            <div class="ph-badge">Coming Soon</div>
+        </div>
+    </div>
+</div>
+
+<!-- Save indicator -->
+<div class="save-indicator" id="saveIndicator"><span class="ico ico-sm" style="vertical-align:middle; margin-right:3px;"><svg viewBox="0 0 24 24" style="stroke:#10b981;"><polyline points="20 6 9 17 4 12"/></svg></span> Settings saved</div>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- VoiceSDK for chat -->
+<script src="/voicesdk.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const API = window.location.origin;
+let assistants = [];
+let selectedId = null;
+let voiceInstance = null;
+let saveTimeout = null;
+let isChatMode = false;
+let isDirty = false;
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    loadAssistants();
+    bindEvents();
+});
+
+// ═══════════════════════════════════════════════
+// API CALLS
+// ═══════════════════════════════════════════════
+async function apiGet(path) {
+    const r = await fetch(API + path);
+    return r.json();
+}
+async function apiPost(path, body) {
+    const r = await fetch(API + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
+    });
+    return r.json();
+}
+async function apiPut(path, body) {
+    const r = await fetch(API + path, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    return r.json();
+}
+async function apiDelete(path) {
+    const r = await fetch(API + path, { method: 'DELETE' });
+    return r.json();
+}
+
+// ═══════════════════════════════════════════════
+// LOAD & RENDER
+// ═══════════════════════════════════════════════
+async function loadAssistants() {
+    const data = await apiGet('/api/assistants');
+    assistants = data.assistants || [];
+    renderAssistantList();
+    if (selectedId) {
+        const exists = assistants.find(a => a.id === selectedId);
+        if (exists) selectAssistant(selectedId);
+        else { selectedId = null; showEmpty(); }
+    }
+}
+
+function renderAssistantList(filter) {
+    const list = document.getElementById('assistantList');
+    const q = (filter || document.getElementById('searchInput').value).toLowerCase();
+    const filtered = q ? assistants.filter(a => a.name.toLowerCase().includes(q)) : assistants;
+
+    list.innerHTML = filtered.map(a => `
+        <div class="assistant-item ${a.id === selectedId ? 'active' : ''}" data-id="${a.id}">
+            <div class="name">${escHtml(a.name)}</div>
+            <div class="meta">
+                <span class="provider-tag">deepgram</span> · 
+                <span class="provider-tag">openai</span> ·
+                <span class="provider-tag">${a.published ? 'published' : 'draft'}</span>
+            </div>
+        </div>
+    `).join('');
+
+    // Bind clicks
+    list.querySelectorAll('.assistant-item').forEach(el => {
+        el.onclick = () => selectAssistant(el.dataset.id);
+    });
+}
+
+// ═══════════════════════════════════════════════
+// SELECT ASSISTANT
+// ═══════════════════════════════════════════════
+function selectAssistant(id) {
+    selectedId = id;
+    const a = assistants.find(x => x.id === id);
+    if (!a) return showEmpty();
+
+    // Show detail, hide empty
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('assistantDetail').style.display = 'flex';
+
+    // Exit chat mode
+    exitChatMode();
+
+    // Header
+    document.getElementById('detailName').textContent = a.name;
+    document.getElementById('detailId').textContent = 'ID: ' + a.id;
+
+    // Settings fields
+    document.getElementById('fieldModel').value = a.openai_model || 'gpt-4o-mini';
+    document.getElementById('fieldFirstMessage').value = a.first_message || '';
+    document.getElementById('fieldSystemPrompt').value = a.system_prompt || '';
+    document.getElementById('fieldTemperature').value = a.temperature != null ? a.temperature : 0.7;
+    document.getElementById('fieldMaxTokens').value = a.max_tokens != null ? a.max_tokens : 200;
+    document.getElementById('fieldName').value = a.name || '';
+    document.getElementById('fieldIdDisplay').value = a.id;
+    document.getElementById('fieldCreated').value = a.created_at ? new Date(a.created_at).toLocaleString() : '';
+    document.getElementById('fieldUpdated').value = a.updated_at ? new Date(a.updated_at).toLocaleString() : '';
+
+    // Set provider dropdowns and load corresponding models
+    const sttProvider = a.stt_provider || 'deepgram';
+    const ttsProvider = a.tts_provider || 'deepgram';
+    document.getElementById('fieldSTTProvider').value = sttProvider;
+    document.getElementById('fieldTTSProvider').value = ttsProvider;
+    populateModelDropdown('fieldSTT', sttProvider, 'stt', a.stt_model || 'nova-2');
+    populateModelDropdown('fieldTTS', ttsProvider, 'tts', a.tts_model || 'aura-asteria-en');
+
+    // Publish button state
+    updatePublishButton(a);
+
+    // Published banner
+    const banner = document.getElementById('publishBanner');
+    if (a.published) {
+        banner.classList.add('visible');
+        document.getElementById('publishUrl').textContent = window.location.origin + '/a/' + a.id;
+    } else {
+        banner.classList.remove('visible');
+    }
+
+    // Highlight in list
+    renderAssistantList('');
+
+    // Reset dirty state
+    isDirty = false;
+    updatePublishDirtyState();
+}
+
+function showEmpty() {
+    document.getElementById('emptyState').style.display = 'flex';
+    document.getElementById('assistantDetail').style.display = 'none';
+}
+
+function updatePublishButton(a) {
+    const btn = document.getElementById('publishBtn');
+    if (a.published) {
+        btn.textContent = 'Published';
+        btn.classList.add('published');
+        btn.classList.remove('publish-btn');
+    } else {
+        btn.textContent = 'Save & Publish';
+        btn.classList.remove('published');
+        btn.classList.add('publish-btn');
+    }
+}
+
+// ═══════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════
+function bindEvents() {
+    // Nav rail navigation
+    document.querySelectorAll('.nav-rail .nav-item').forEach(item => {
+        item.onclick = () => {
+            const page = item.dataset.nav;
+            document.querySelectorAll('.nav-rail .nav-item').forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
+            document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
+            const panel = document.getElementById('page-' + page);
+            if (panel) panel.classList.add('active');
+            // Load call page data when navigating to it
+            if (page === 'call') {
+                loadCallConfig();
+                loadCallLog();
+            }
+            // Load call logs when navigating to history page
+            if (page === 'history') {
+                loadCallLogs();
+            }
+            // Load phone page when navigating to it
+            if (page === 'phone') {
+                loadPhonePage();
+            }
+        };
+    });
+
+    // Nav rail collapse/expand
+    document.getElementById('navCollapseBtn').onclick = () => {
+        const rail = document.getElementById('navRail');
+        const btn = document.getElementById('navCollapseBtn');
+        rail.classList.toggle('collapsed');
+        btn.textContent = rail.classList.contains('collapsed') ? '▶' : '◀';
+        btn.title = rail.classList.contains('collapsed') ? 'Expand sidebar' : 'Collapse sidebar';
+    };
+
+    // Create assistant
+    document.getElementById('createAssistantBtn').onclick = createAssistant;
+
+    // Search
+    document.getElementById('searchInput').oninput = () => renderAssistantList('');
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => switchTab(tab.dataset.tab);
+    });
+
+    // Mark dirty on change (no auto-save — save happens on Publish click)
+    const editableFields = ['fieldModel', 'fieldFirstMessage', 'fieldSystemPrompt', 'fieldSTT', 'fieldTTS', 'fieldName', 'fieldTemperature', 'fieldMaxTokens', 'fieldSTTProvider', 'fieldTTSProvider'];
+    editableFields.forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', () => { markDirty(); });
+        el.addEventListener('change', () => { markDirty(); });
+    });
+
+    // Publish
+    document.getElementById('publishBtn').onclick = togglePublish;
+
+    // Delete
+    document.getElementById('deleteBtn').onclick = deleteAssistant;
+
+    // Talk to Assistant
+    document.getElementById('talkBtn').onclick = enterChatMode;
+
+    // Copy URL
+    document.getElementById('copyUrlBtn').onclick = () => {
+        navigator.clipboard.writeText(document.getElementById('publishUrl').textContent);
+        showToast('URL copied to clipboard!', 'success');
+    };
+
+    // Copy ID
+    document.getElementById('detailId').onclick = () => {
+        const id = selectedId;
+        if (id) {
+            navigator.clipboard.writeText(id);
+            showToast('ID copied!', 'success');
+        }
+    };
+
+    // Chat back button
+    document.getElementById('chatBackBtn').onclick = exitChatMode;
+
+    // New Chat button
+    document.getElementById('chatNewChatBtn').onclick = newChat;
+}
+
+function newChat() {
+    if (!selectedId) return;
+    // Destroy current voice instance
+    if (voiceInstance) {
+        voiceInstance.destroy();
+        voiceInstance = null;
+    }
+    // Clear chat messages
+    document.getElementById('chatMessages').innerHTML = '';
+    document.getElementById('chatCallBtn').classList.remove('call-active');
+    // Re-enter chat mode (creates fresh VoiceSDK instance)
+    isChatMode = false;
+    enterChatMode();
+    showToast('New chat started!', 'success');
+}
+
+// ═══════════════════════════════════════════════
+// CREATE, SAVE, DELETE, PUBLISH
+// ═══════════════════════════════════════════════
+async function createAssistant() {
+    const data = await apiPost('/api/assistants', { name: 'New Assistant' });
+    assistants.push(data);
+    renderAssistantList('');
+    selectAssistant(data.id);
+    showToast('Assistant created!', 'success');
+    // Focus name field for renaming
+    switchTab('advanced');
+    setTimeout(() => document.getElementById('fieldName').focus(), 100);
+}
+
+function debouncedSave() {
+    // Auto-save disabled — settings are saved only when Publish is clicked
+}
+
+async function saveAssistant() {
+    if (!selectedId) return;
+    const body = {
+        name: document.getElementById('fieldName').value.trim() || 'Untitled',
+        openai_model: document.getElementById('fieldModel').value,
+        first_message: document.getElementById('fieldFirstMessage').value,
+        system_prompt: document.getElementById('fieldSystemPrompt').value,
+        stt_provider: document.getElementById('fieldSTTProvider').value,
+        stt_model: document.getElementById('fieldSTT').value,
+        tts_provider: document.getElementById('fieldTTSProvider').value,
+        tts_model: document.getElementById('fieldTTS').value,
+        temperature: parseFloat(document.getElementById('fieldTemperature').value) || 0.7,
+        max_tokens: parseInt(document.getElementById('fieldMaxTokens').value) || 200,
+    };
+    const updated = await apiPut('/api/assistants/' + selectedId, body);
+    // Update local
+    const idx = assistants.findIndex(a => a.id === selectedId);
+    if (idx !== -1) assistants[idx] = updated;
+    document.getElementById('detailName').textContent = updated.name;
+    renderAssistantList('');
+    isDirty = false;
+    updatePublishDirtyState();
+}
+
+async function deleteAssistant() {
+    if (!selectedId) return;
+    if (!confirm('Delete this assistant? This cannot be undone.')) return;
+    await apiDelete('/api/assistants/' + selectedId);
+    assistants = assistants.filter(a => a.id !== selectedId);
+    selectedId = null;
+    renderAssistantList('');
+    showEmpty();
+    showToast('Assistant deleted', 'success');
+}
+
+async function togglePublish() {
+    if (!selectedId) return;
+    const a = assistants.find(x => x.id === selectedId);
+    if (!a) return;
+
+    // If already published → unpublish
+    if (a.published) {
+        const updated = await apiPost('/api/assistants/' + selectedId + '/unpublish');
+        const idx = assistants.findIndex(x => x.id === selectedId);
+        if (idx !== -1) assistants[idx] = updated;
+        updatePublishButton(updated);
+        document.getElementById('publishBanner').classList.remove('visible');
+        renderAssistantList('');
+        isDirty = false;
+        updatePublishDirtyState();
+        showToast('Assistant unpublished', 'success');
+        return;
+    }
+
+    // Save settings first, then publish
+    await saveAssistant();
+    const updated = await apiPost('/api/assistants/' + selectedId + '/publish');
+    const idx = assistants.findIndex(x => x.id === selectedId);
+    if (idx !== -1) assistants[idx] = updated;
+    updatePublishButton(updated);
+    document.getElementById('publishBanner').classList.add('visible');
+    document.getElementById('publishUrl').textContent = updated.public_url || (window.location.origin + '/a/' + selectedId);
+    renderAssistantList('');
+    isDirty = false;
+    updatePublishDirtyState();
+    showToast('Settings saved & published!', 'success');
+}
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+    const el = document.getElementById('tab-' + tab);
+    if (el) el.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════
+// PROVIDER MODEL LOADING
+// ═══════════════════════════════════════════════
+let providerModelsCache = {};
+
+async function fetchProviderModels(provider, type) {
+    const key = provider + '_' + type;
+    if (providerModelsCache[key]) return providerModelsCache[key];
+    try {
+        const data = await apiGet('/api/provider-models?provider=' + encodeURIComponent(provider) + '&type=' + encodeURIComponent(type));
+        providerModelsCache[key] = data.models || [];
+        return providerModelsCache[key];
+    } catch (e) {
+        console.error('Failed to fetch models for', provider, type, e);
+        return [];
+    }
+}
+
+async function populateModelDropdown(selectId, provider, type, currentValue) {
+    const models = await fetchProviderModels(provider, type);
+    const sel = document.getElementById(selectId);
+    sel.innerHTML = '';
+    models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        sel.appendChild(opt);
+    });
+    if (currentValue && models.some(m => m.value === currentValue)) {
+        sel.value = currentValue;
+    } else if (models.length > 0) {
+        sel.value = models[0].value;
+    }
+    markDirty();
+}
+
+async function onSTTProviderChange() {
+    const provider = document.getElementById('fieldSTTProvider').value;
+    await populateModelDropdown('fieldSTT', provider, 'stt', null);
+}
+
+async function onTTSProviderChange() {
+    const provider = document.getElementById('fieldTTSProvider').value;
+    await populateModelDropdown('fieldTTS', provider, 'tts', null);
+}
+
+// ═══════════════════════════════════════════════
+// CHAT MODE (Talk to Assistant)
+// ═══════════════════════════════════════════════
+let chatConversation = [];
+let chatStartedAt = null;
+
+function enterChatMode() {
+    if (!selectedId) return;
+    const a = assistants.find(x => x.id === selectedId);
+    if (!a) return;
+
+    isChatMode = true;
+    chatConversation = [];
+    chatStartedAt = new Date().toISOString();
+    document.getElementById('settingsPanel').style.display = 'none';
+    document.getElementById('chatPanel').classList.add('visible');
+    document.getElementById('tabsBar').style.display = 'none';
+    document.getElementById('chatNameLabel').textContent = a.name;
+    document.getElementById('chatMessages').innerHTML = '';
+
+    // Update talk button
+    document.getElementById('talkBtn').textContent = 'Settings';
+    document.getElementById('talkBtn').onclick = exitChatMode;
+
+    // Create VoiceSDK instance
+    if (voiceInstance) {
+        voiceInstance.destroy();
+        voiceInstance = null;
+    }
+
+    voiceInstance = new VoiceSDK({
+        serverUrl: API,
+        systemPrompt: a.system_prompt || 'You are a helpful assistant.',
+        greeting: a.first_message || null,
+        model: a.openai_model || undefined,
+        ttsModel: a.tts_model || undefined,
+        temperature: a.temperature != null ? a.temperature : 0.7,
+        maxTokens: a.max_tokens != null ? a.max_tokens : 200,
+        onUserTranscript: function (text) { chatRemoveThinking(); chatAddMsg(text, 'user'); },
+        onAIResponse: function (text) { chatRemoveThinking(); chatAddMsg(text, 'ai'); },
+        onStateChange: function (state) { chatUpdateStatus(state); if (state === 'thinking') chatShowThinking(); },
+        onInterim: function (text) { if (text) chatShowInterim(text); else chatRemoveInterim(); },
+        onError: function (err) { chatShowError(err.message); }
+    });
+
+    // Bind chat buttons
+    document.getElementById('chatCallBtn').onclick = function () {
+        voiceInstance.toggleCall();
+        this.classList.toggle('call-active', voiceInstance.isActive());
+    };
+    document.getElementById('chatSendBtn').onclick = chatSendText;
+    document.getElementById('chatTextInput').onkeydown = function (e) { if (e.key === 'Enter') chatSendText(); };
+}
+
+function exitChatMode() {
+    // Log chat session to Supabase
+    if (chatConversation.length > 0 && selectedId) {
+        const a = assistants.find(x => x.id === selectedId);
+        const durationSec = chatStartedAt ? Math.round((Date.now() - new Date(chatStartedAt).getTime()) / 1000) : 0;
+        fetch(API + '/api/chat-log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: 'chat_' + Date.now(),
+                assistant_id: selectedId,
+                customer_name: a ? a.name : 'Chat Session',
+                duration: durationSec,
+                conversation: chatConversation,
+                started_at: chatStartedAt
+            })
+        }).catch(e => console.warn('Failed to log chat session', e));
+    }
+    chatConversation = [];
+    chatStartedAt = null;
+
+    isChatMode = false;
+    if (voiceInstance) {
+        voiceInstance.destroy();
+        voiceInstance = null;
+    }
+    document.getElementById('settingsPanel').style.display = 'block';
+    document.getElementById('chatPanel').classList.remove('visible');
+    document.getElementById('tabsBar').style.display = 'flex';
+
+    // Restore talk button
+    document.getElementById('talkBtn').innerHTML = '<span class="ico ico-sm" style="vertical-align:middle; margin-right:3px;"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span> Talk to Assistant';
+    document.getElementById('talkBtn').onclick = enterChatMode;
+
+    // Reset call button
+    document.getElementById('chatCallBtn').classList.remove('call-active');
+}
+
+function chatSendText() {
+    const input = document.getElementById('chatTextInput');
+    const text = input.value.trim();
+    if (!text || !voiceInstance) return;
+    input.value = '';
+    voiceInstance.sendText(text);
+}
+
+// ─── Chat UI Helpers ───
+
+function chatAddMsg(text, type) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + type;
+    const now = new Date();
+    const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    if (type === 'ai') {
+        div.innerHTML = '<span class="avatar-sm">AI</span>' + escHtml(text) + '<div class="time">' + time + '</div>';
+    } else {
+        div.innerHTML = escHtml(text) + '<div class="time">' + time + '</div>';
+    }
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    // Track conversation for logging
+    chatConversation.push({ role: type === 'user' ? 'user' : 'assistant', text: text, timestamp: now.toISOString() });
+}
+
+let chatInterimDiv = null;
+function chatShowInterim(text) {
+    const container = document.getElementById('chatMessages');
+    if (!chatInterimDiv) {
+        chatInterimDiv = document.createElement('div');
+        chatInterimDiv.className = 'chat-msg interim';
+        container.appendChild(chatInterimDiv);
+    }
+    chatInterimDiv.textContent = text;
+    container.scrollTop = container.scrollHeight;
+}
+function chatRemoveInterim() { if (chatInterimDiv) { chatInterimDiv.remove(); chatInterimDiv = null; } }
+
+function chatShowThinking() {
+    chatRemoveThinking();
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg thinking';
+    div.id = 'chatThinkingMsg';
+    div.innerHTML = '<span class="avatar-sm">AI</span> thinking...';
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+function chatRemoveThinking() {
+    const el = document.getElementById('chatThinkingMsg');
+    if (el) el.remove();
+}
+
+function chatShowError(msg) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg';
+    div.style.cssText = 'align-self:center; background:#7f1d1d; color:#fca5a5; font-size:12px; padding:8px 14px;';
+    div.textContent = msg;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    setTimeout(() => div.remove(), 5000);
+}
+
+function chatUpdateStatus(state) {
+    const bar = document.getElementById('chatStatusBar');
+    const header = document.getElementById('chatHeaderStatus');
+    bar.className = 'chat-status-bar';
+    if (state === 'idle') {
+        bar.classList.remove('visible');
+        header.textContent = 'Online';
+    } else if (state === 'listening') {
+        bar.classList.add('visible', 'listening');
+        bar.textContent = 'Listening...';
+        header.textContent = 'On call';
+    } else if (state === 'thinking') {
+        bar.classList.add('visible', 'thinking');
+        bar.textContent = 'Thinking...';
+        header.textContent = 'On call';
+    } else if (state === 'speaking') {
+        bar.classList.add('visible', 'speaking');
+        bar.textContent = 'Speaking...';
+        header.textContent = 'On call';
+    }
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function escHtml(str) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(str));
+    return d.innerHTML;
+}
+
+function showSaveIndicator() {
+    const el = document.getElementById('saveIndicator');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function markDirty() {
+    isDirty = true;
+    updatePublishDirtyState();
+}
+
+function updatePublishDirtyState() {
+    const btn = document.getElementById('publishBtn');
+    if (!selectedId) return;
+    const a = assistants.find(x => x.id === selectedId);
+    if (!a) return;
+    // If already published, button always interactive (for unpublish)
+    if (a.published) {
+        btn.classList.remove('dirty');
+        return;
+    }
+    // For unpublished: light up only when changes made
+    if (isDirty) {
+        btn.classList.add('dirty');
+        btn.textContent = 'Save & Publish';
+    } else {
+        btn.classList.remove('dirty');
+        btn.textContent = 'Save & Publish';
+    }
+}
+
+function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type + ' show';
+    setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════
+// PHONE NUMBERS PAGE (Twilio & Vobiz)
+// ═══════════════════════════════════════════════
+
+async function loadPhonePage() {
+    try {
+        const data = await apiGet('/api/phone-providers');
+        if (data.twilio) {
+            const badge = document.getElementById('twilioConnBadge');
+            if (data.twilio._connected) {
+                badge.textContent = 'CONNECTED';
+                badge.style.background = '#052e16';
+                badge.style.color = '#22c55e';
+                document.getElementById('twilioSidInput').value = data.twilio.account_sid || '';
+                document.getElementById('twilioTokenInput').value = data.twilio.auth_token || '';
+                document.getElementById('twilioDiscBtn').style.display = 'block';
+                document.getElementById('twilioNumbersPanel').style.display = 'block';
+                refreshNumbers('twilio');
+            }
+        }
+        if (data.vobiz) {
+            const badge = document.getElementById('vobizConnBadge');
+            if (data.vobiz._connected) {
+                badge.textContent = 'CONNECTED';
+                badge.style.background = '#052e16';
+                badge.style.color = '#22c55e';
+                document.getElementById('vobizAuthIdInput').value = data.vobiz.auth_id || '';
+                document.getElementById('vobizTokenInput').value = data.vobiz.auth_token || '';
+                document.getElementById('vobizDiscBtn').style.display = 'block';
+                document.getElementById('vobizNumbersPanel').style.display = 'block';
+                refreshNumbers('vobiz');
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load phone providers', e);
+    }
+}
+
+async function connectProvider(provider) {
+    const statusEl = document.getElementById(provider + 'Status');
+    const btn = document.getElementById(provider + 'ConnBtn');
+    btn.disabled = true;
+    btn.textContent = 'Connecting...';
+    statusEl.style.display = 'block';
+    statusEl.style.background = '#1e293b';
+    statusEl.style.color = '#9ca3af';
+    statusEl.textContent = 'Testing connection...';
+
+    let body = {};
+    if (provider === 'twilio') {
+        body = { account_sid: document.getElementById('twilioSidInput').value.trim(), auth_token: document.getElementById('twilioTokenInput').value.trim() };
+    } else if (provider === 'vobiz') {
+        body = { auth_id: document.getElementById('vobizAuthIdInput').value.trim(), auth_token: document.getElementById('vobizTokenInput').value.trim() };
+    }
+
+    try {
+        const resp = await fetch(API + '/api/phone-providers/' + provider, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+            statusEl.style.background = '#052e16';
+            statusEl.style.color = '#22c55e';
+            statusEl.textContent = data.message;
+            const badge = document.getElementById(provider + 'ConnBadge');
+            badge.textContent = 'CONNECTED';
+            badge.style.background = '#052e16';
+            badge.style.color = '#22c55e';
+            document.getElementById(provider + 'DiscBtn').style.display = 'block';
+            document.getElementById(provider + 'NumbersPanel').style.display = 'block';
+            if (data.numbers) renderPhoneNumbers(provider, data.numbers);
+        } else {
+            statusEl.style.background = '#450a0a';
+            statusEl.style.color = '#ef4444';
+            statusEl.textContent = 'Connection failed: ' + (data.error || 'Connection failed');
+        }
+    } catch (e) {
+        statusEl.style.background = '#450a0a';
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Network error: ' + e.message;
+    }
+    btn.disabled = false;
+    btn.textContent = 'Connect ' + (provider === 'twilio' ? 'Twilio' : 'Vobiz');
+}
+
+async function disconnectProvider(provider) {
+    if (!confirm('Disconnect ' + provider + '? Saved credentials will be removed.')) return;
+    try {
+        await fetch(API + '/api/phone-providers/' + provider, { method: 'DELETE' });
+        const badge = document.getElementById(provider + 'ConnBadge');
+        badge.textContent = 'NOT CONNECTED';
+        badge.style.background = '#450a0a';
+        badge.style.color = '#ef4444';
+        document.getElementById(provider + 'DiscBtn').style.display = 'none';
+        document.getElementById(provider + 'NumbersPanel').style.display = 'none';
+        document.getElementById(provider + 'Status').style.display = 'none';
+        if (provider === 'twilio') {
+            document.getElementById('twilioSidInput').value = '';
+            document.getElementById('twilioTokenInput').value = '';
+        } else {
+            document.getElementById('vobizAuthIdInput').value = '';
+            document.getElementById('vobizTokenInput').value = '';
+        }
+    } catch (e) {
+        console.error('Disconnect error', e);
+    }
+}
+
+async function refreshNumbers(provider) {
+    const listEl = document.getElementById(provider + 'NumbersList');
+    listEl.innerHTML = '<div style="color:#6b7280; font-size:12px;">Loading numbers...</div>';
+    try {
+        const data = await apiGet('/api/phone-numbers/' + provider);
+        if (data.numbers) renderPhoneNumbers(provider, data.numbers);
+        else listEl.innerHTML = '<div style="color:#ef4444; font-size:12px;">Failed to load</div>';
+    } catch (e) {
+        listEl.innerHTML = '<div style="color:#ef4444; font-size:12px;">Error: ' + escHtml(e.message) + '</div>';
+    }
+}
+
+function renderPhoneNumbers(provider, numbers) {
+    const listEl = document.getElementById(provider + 'NumbersList');
+    if (!numbers || numbers.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#4b5563; font-size:12px;">No phone numbers found on this account</div>';
+        return;
+    }
+    listEl.innerHTML = numbers.map(n => {
+        const num = n.phone_number || n.number || '';
+        const name = n.friendly_name || n.name || '';
+        const caps = n.capabilities ? Object.keys(n.capabilities).filter(k => n.capabilities[k]).map(k => '<span style="background:#1f2937; padding:1px 6px; border-radius:3px; font-size:9px; color:#9ca3af; text-transform:uppercase;">' + k + '</span>').join(' ') : '';
+        return '<div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid #1e2030;">' +
+            '<div style="width:32px; height:32px; background:#1f2937; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg style="width:16px; height:16px; fill:none; stroke:#9ca3af; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>' +
+            '<div style="flex:1; min-width:0;">' +
+            '<div style="font-size:14px; font-weight:600; color:#e1e1e6; font-family:monospace;">' + escHtml(num) + '</div>' +
+            (name ? '<div style="font-size:11px; color:#6b7280;">' + escHtml(name) + '</div>' : '') +
+            '</div>' +
+            (caps ? '<div style="display:flex; gap:4px;">' + caps + '</div>' : '') +
+            '</div>';
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// CALL LOGS PAGE
+// ═══════════════════════════════════════════════
+
+let callLogsData = [];
+let callLogsFiltered = [];
+
+async function loadCallLogs() {
+    try {
+        const data = await apiGet('/api/call-logs');
+        callLogsData = data.logs || [];
+        // Update stats
+        const s = data.stats || {};
+        document.getElementById('statTotal').textContent = s.total_calls || 0;
+        document.getElementById('statAnswered').textContent = s.answered || 0;
+        document.getElementById('statUnanswered').textContent = s.unanswered || 0;
+        document.getElementById('statDuration').textContent = formatDurationShort(s.total_duration || 0);
+        // Populate assistant filter
+        const asel = document.getElementById('clFilterAssistant');
+        const curVal = asel.value;
+        asel.innerHTML = '<option value="">All</option>';
+        const seen = {};
+        callLogsData.forEach(c => {
+            if (c.assistant_id && !seen[c.assistant_id]) {
+                seen[c.assistant_id] = true;
+                const a = assistants.find(x => x.id === c.assistant_id);
+                asel.innerHTML += '<option value="' + c.assistant_id + '">' + escHtml(a ? a.name : c.assistant_id) + '</option>';
+            }
+        });
+        if (curVal) asel.value = curVal;
+        applyCallLogFilters();
+    } catch (e) {
+        console.error('Failed to load call logs', e);
+    }
+}
+
+function applyCallLogFilters() {
+    const dateVal = document.getElementById('clFilterDate').value;
+    const assistantVal = document.getElementById('clFilterAssistant').value;
+    const phoneVal = (document.getElementById('clFilterPhone').value || '').trim().toLowerCase();
+    const typeVal = document.getElementById('clFilterType').value;
+    const statusVal = document.getElementById('clFilterStatus').value;
+
+    callLogsFiltered = callLogsData.filter(c => {
+        if (dateVal) {
+            const d = c.created_at ? c.created_at.substring(0, 10) : '';
+            if (d !== dateVal) return false;
+        }
+        if (assistantVal && c.assistant_id !== assistantVal) return false;
+        if (phoneVal && !(c.phone_number || '').toLowerCase().includes(phoneVal)) return false;
+        if (typeVal && (c.call_type || 'outbound') !== typeVal) return false;
+        if (statusVal && c.status !== statusVal) return false;
+        return true;
+    });
+    renderCallLogsTable();
+}
+
+function renderCallLogsTable() {
+    const tbody = document.getElementById('clTableBody');
+    if (callLogsFiltered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#4b5563;"><div style="opacity:0.3; margin-bottom:8px;"><svg style="width:28px; height:28px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>No calls match your filters</td></tr>';
+        return;
+    }
+    tbody.innerHTML = callLogsFiltered.map((c, idx) => {
+        const statusColors = { 'completed': '#22c55e', 'busy': '#ef4444', 'failed': '#ef4444', 'no-answer': '#f59e0b', 'queued': '#22d3ee', 'initiated': '#22d3ee', 'ringing': '#22d3ee', 'in-progress': '#3b82f6', 'canceled': '#6b7280' };
+        const color = statusColors[c.status] || '#6b7280';
+        const dur = c.duration ? formatDuration(parseInt(c.duration)) : '--';
+        const time = c.created_at ? new Date(c.created_at).toLocaleString() : '--';
+        const hasT = c.conversation && c.conversation.length > 0;
+        const callType = (c.call_type || 'outbound');
+        const typeBg = callType === 'chat' ? '#1e3a5f' : '#0c2a38';
+        const typeColor = callType === 'chat' ? '#60a5fa' : '#22d3ee';
+        return '<tr onclick="openCallLogDetail(' + idx + ')">' +
+            '<td><span class="cl-badge" style="background:' + typeBg + ';color:' + typeColor + ';">' + (callType === 'chat' ? 'Chat' : 'Call') + '</span></td>' +
+            '<td style="font-weight:500;">' + escHtml(c.customer_name || '--') + '</td>' +
+            '<td style="font-family:monospace; font-size:12px;">' + escHtml(c.phone_number || '--') + '</td>' +
+            '<td><span class="cl-badge" style="background:' + color + '22;color:' + color + ';">' + (c.status || 'unknown').toUpperCase() + '</span></td>' +
+            '<td>' + dur + '</td>' +
+            '<td style="color:#6b7280; font-size:12px;">' + time + '</td>' +
+            '<td>' + (hasT ? '<span style="color:#22d3ee;"><svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>' : '<span style="color:#2a2d3a;">—</span>') + '</td>' +
+            '</tr>';
+    }).join('');
+}
+
+function formatDuration(seconds) {
+    if (!seconds || seconds <= 0) return '0s';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) return mins + 'm ' + secs + 's';
+    return secs + 's';
+}
+
+function formatDurationShort(seconds) {
+    if (!seconds || seconds <= 0) return '0m';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hrs > 0) return hrs + 'h ' + mins + 'm';
+    return mins + 'm';
+}
+
+function openCallLogDetail(idx) {
+    const c = callLogsFiltered[idx];
+    if (!c) return;
+
+    const statusColors = { 'completed': '#22c55e', 'busy': '#ef4444', 'failed': '#ef4444', 'no-answer': '#f59e0b', 'queued': '#22d3ee', 'initiated': '#22d3ee', 'ringing': '#22d3ee', 'in-progress': '#3b82f6', 'canceled': '#6b7280' };
+    const color = statusColors[c.status] || '#6b7280';
+    const time = c.created_at ? new Date(c.created_at).toLocaleString() : '--';
+    const endTime = c.ended_at ? new Date(c.ended_at).toLocaleString() : '--';
+    const dur = c.duration ? formatDuration(parseInt(c.duration)) : '--';
+    const assistant = c.assistant_id ? assistants.find(a => a.id === c.assistant_id) : null;
+    const assistantName = assistant ? assistant.name : (c.assistant_id || 'Default Voice Agent');
+    const callType = c.call_type || 'outbound';
+
+    document.getElementById('clDetailTitle').textContent = (callType === 'chat' ? 'Chat' : 'Call') + ' — ' + (c.customer_name || c.phone_number || 'Unknown');
+
+    let html = '';
+    // Info cards
+    html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">';
+    html += _detailCard('Status', '<span style="color:' + color + ';">' + (c.status || 'unknown').toUpperCase() + '</span>');
+    html += _detailCard('Duration', dur);
+    html += _detailCard('Type', callType === 'chat' ? 'Chat' : 'Outbound');
+    html += _detailCard('Assistant', escHtml(assistantName));
+    html += _detailCard('Started', time);
+    html += _detailCard('Ended', endTime);
+    if (callType !== 'chat') {
+        html += _detailCard('Phone', escHtml(c.phone_number || '--'));
+        html += _detailCard('From', escHtml(c.from_number || '--'));
+    }
+    html += '</div>';
+
+    if (c.twilio_sid) {
+        html += '<div style="background:#1f2937; border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:11px; color:#6b7280;">SID: <span style="color:#e1e1e6; font-family:monospace; word-break:break-all;">' + escHtml(c.twilio_sid) + '</span></div>';
+    }
+
+    // Transcript
+    html += '<h3 style="font-size:14px; font-weight:600; color:#e1e1e6; margin-bottom:12px;">Transcript</h3>';
+    if (c.conversation && c.conversation.length > 0) {
+        c.conversation.forEach(msg => {
+            const isUser = msg.role === 'user';
+            const msgTime = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+            html += '<div style="display:flex; gap:8px; margin-bottom:10px; flex-direction:' + (isUser ? 'row-reverse' : 'row') + ';">';
+            html += '<div style="width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; background:' + (isUser ? '#1f6feb' : '#2a2d3a') + ';"><svg style="width:14px;height:14px;fill:none;stroke:#e1e1e6;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24">' + (isUser ? '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' : '<path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><circle cx="12" cy="17" r="4"/>') + '</svg></div>';
+            html += '<div style="max-width:75%; padding:8px 12px; border-radius:10px; font-size:12px; line-height:1.5; background:' + (isUser ? '#1f3a5f' : '#252838') + '; color:#e1e1e6;">';
+            html += escHtml(msg.text || msg.content || '');
+            if (msgTime) html += '<div style="font-size:9px; color:#4b5563; margin-top:2px;">' + msgTime + '</div>';
+            html += '</div></div>';
+        });
+    } else {
+        html += '<div style="text-align:center; color:#4b5563; padding:20px; font-size:12px;">No transcript available</div>';
+    }
+
+    document.getElementById('clDetailBody').innerHTML = html;
+    document.getElementById('clDetailOverlay').classList.add('open');
+    document.getElementById('clDetailPanel').classList.add('open');
+}
+
+function _detailCard(label, value) {
+    return '<div style="background:#1f2937; border-radius:8px; padding:10px 12px;"><div style="font-size:9px; font-weight:600; color:#6b7280; text-transform:uppercase; margin-bottom:3px;">' + label + '</div><div style="font-size:13px; color:#e1e1e6;">' + value + '</div></div>';
+}
+
+function closeCallLogDetail() {
+    document.getElementById('clDetailOverlay').classList.remove('open');
+    document.getElementById('clDetailPanel').classList.remove('open');
+}
+
+async function migrateLogsToSupabase() {
+    const btn = document.getElementById('migrateBtn');
+    btn.disabled = true;
+    btn.textContent = 'Migrating...';
+    try {
+        const resp = await fetch(API + '/api/migrate-logs', { method: 'POST' });
+        const data = await resp.json();
+        if (resp.ok) {
+            btn.textContent = 'Done!';
+            showToast('Migrated ' + (data.migrated || 0) + ' logs, ' + (data.skipped || 0) + ' skipped');
+            setTimeout(() => { btn.textContent = 'Migrate Local \u2192 Supabase'; btn.disabled = false; }, 3000);
+            loadCallLogs();
+        } else {
+            btn.textContent = 'Failed';
+            showToast(data.error || 'Migration failed');
+            setTimeout(() => { btn.textContent = 'Migrate Local \u2192 Supabase'; btn.disabled = false; }, 3000);
+        }
+    } catch (e) {
+        btn.textContent = 'Error';
+        showToast('Network error: ' + e.message);
+        setTimeout(() => { btn.textContent = 'Migrate Local \u2192 Supabase'; btn.disabled = false; }, 3000);
+    }
+}
+
+// ═══════════════════════════════════════════════
+// OUTBOUND CALL PAGE
+// ═══════════════════════════════════════════════
+
+async function loadCallConfig() {
+    try {
+        const config = await apiGet('/api/call-config');
+        // Public URL status (may be commented out in HTML)
+        const purlEl = document.getElementById('publicUrlStatus');
+        const purlBanner = document.getElementById('publicUrlBanner');
+        const purlBadge = document.getElementById('publicUrlStatusBadge');
+        const purlInput = document.getElementById('publicUrlInput');
+        if (purlEl && purlBanner && purlBadge && purlInput) {
+            if (config.public_url && config.public_url.configured) {
+                purlEl.innerHTML = '<span style="color:#22c55e;">Connected — ' + config.public_url.url + '</span>';
+                purlBanner.style.background = '#052e16';
+                purlBanner.style.borderColor = '#166534';
+                purlBadge.textContent = 'CONNECTED';
+                purlBadge.style.background = '#052e16';
+                purlBadge.style.color = '#22c55e';
+                purlInput.value = config.public_url.url;
+            } else {
+                purlEl.innerHTML = '<span style="color:#ef4444;">Not set</span>';
+                purlBanner.style.background = '#1c1507';
+                purlBanner.style.borderColor = '#854d0e';
+                purlBadge.textContent = 'NOT SET';
+                purlBadge.style.background = '#450a0a';
+                purlBadge.style.color = '#ef4444';
+            }
+        }
+        // Twilio status
+        const twilioEl = document.getElementById('twilioStatus');
+        if (twilioEl) {
+            if (config.twilio && config.twilio.configured) {
+                twilioEl.innerHTML = '<span style="color:#22d3ee;">Connected</span>' + (config.twilio.phone_number ? '<br><span style="font-size:10px;color:#6b7280;">' + config.twilio.phone_number + '</span>' : '');
+            } else if (config.twilio && !config.twilio.sdk_installed) {
+                twilioEl.innerHTML = '<span style="color:#f59e0b;">SDK missing</span>';
+            } else {
+                twilioEl.innerHTML = '<span style="color:#ef4444;">Not configured</span>';
+            }
+        }
+        // Deepgram status
+        const dgEl = document.getElementById('deepgramCallStatus');
+        if (dgEl) {
+            if (config.deepgram && config.deepgram.configured) {
+                dgEl.innerHTML = '<span style="color:#22d3ee;">Ready</span>';
+            } else {
+                dgEl.innerHTML = '<span style="color:#ef4444;">Not configured</span>';
+            }
+        }
+        // OpenAI status
+        const oaiEl = document.getElementById('openaiCallStatus');
+        if (oaiEl) {
+            if (config.openai && config.openai.configured) {
+                oaiEl.innerHTML = '<span style="color:#22d3ee;">Ready</span>';
+            } else {
+                oaiEl.innerHTML = '<span style="color:#ef4444;">Not configured</span>';
+            }
+        }
+        // WebSocket status
+        const wsEl = document.getElementById('wsCallStatus');
+        if (wsEl) {
+            if (config.websocket && config.websocket.available) {
+                wsEl.innerHTML = '<span style="color:#22d3ee;">Ready</span>';
+            } else {
+                wsEl.innerHTML = '<span style="color:#ef4444;">Not available</span>';
+            }
+        }
+        // Populate assistant dropdown
+        if (config.assistants) {
+            const sel = document.getElementById('callAssistant');
+            if (sel) {
+                sel.innerHTML = '<option value="">Default Voice Agent</option>';
+                config.assistants.forEach(a => {
+                    sel.innerHTML += '<option value="' + a.id + '">' + escHtml(a.name) + '</option>';
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load call config', e);
+    }
+}
+
+async function loadCallLog() {
+    try {
+        const data = await apiGet('/api/call-log');
+        const calls = data.calls || [];
+        const container = document.getElementById('callLogList');
+        if (calls.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#4b5563; padding:40px 0; font-size:13px;"><div style="opacity:0.3; margin-bottom:12px;"><svg style="width:36px; height:36px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>No calls yet. Make your first outbound call!</div>';
+            return;
+        }
+        container.innerHTML = calls.map(c => {
+            const statusColor = c.status === 'initiated' || c.status === 'queued' || c.status === 'ringing' ? '#22d3ee' : c.status === 'completed' ? '#22c55e' : c.status === 'failed' || c.status === 'busy' || c.status === 'no-answer' ? '#ef4444' : '#6b7280';
+            const providerBadge = '<span style="background:#0c2a38;color:#22d3ee;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;">AI AGENT</span>';
+            const time = c.created_at ? new Date(c.created_at).toLocaleString() : 'Unknown';
+            const duration = c.duration ? ' · ' + c.duration + 's' : '';
+            return '<div style="padding:12px; border-bottom:1px solid #1e2030; transition:background .15s;" onmouseenter="this.style.background=\'#1f2937\'" onmouseleave="this.style.background=\'transparent\'">' +
+                '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">' + providerBadge +
+                '<span style="font-size:13px; font-weight:600; color:#e1e1e6;">' + escHtml(c.phone_number || 'Unknown') + '</span>' +
+                '<span style="margin-left:auto; font-size:11px; color:' + statusColor + '; font-weight:600;">' + (c.status || 'unknown').toUpperCase() + '</span></div>' +
+                '<div style="font-size:11px; color:#6b7280;">' + escHtml(c.customer_name || '') + ' · ' + time + duration + '</div>' +
+                '</div>';
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load call log', e);
+    }
+}
+
+async function makeOutboundCall() {
+    const phoneNumber = document.getElementById('callPhoneNumber').value.trim();
+    if (!phoneNumber) {
+        showCallResult(false, 'Please enter a phone number');
+        return;
+    }
+
+    const customerName = document.getElementById('callCustomerName').value.trim() || 'Customer';
+    const assistantId = document.getElementById('callAssistant').value;
+    const greeting = document.getElementById('callGreeting').value.trim();
+    const systemPrompt = document.getElementById('callSystemPrompt').value.trim();
+    const fromNumber = document.getElementById('callFromNumber').value.trim();
+
+    const btn = document.getElementById('makeCallBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.innerHTML = 'Placing call...';
+
+    try {
+        const body = {
+            phone_number: phoneNumber,
+            customer_name: customerName,
+        };
+        if (assistantId) body.assistant_id = assistantId;
+        if (greeting) body.greeting = greeting;
+        if (systemPrompt) body.system_prompt = systemPrompt;
+        if (fromNumber) body.from_number = fromNumber;
+
+        const result = await apiPost('/api/outbound-call', body);
+
+        if (result.success) {
+            showCallResult(true, 'Call initiated to ' + phoneNumber + ' — Your AI voice agent is handling the conversation!' + (result.twilio_sid ? ' (SID: ' + result.twilio_sid + ')' : ''));
+            loadCallLog();
+        } else {
+            showCallResult(false, result.error || 'Call failed');
+        }
+    } catch (e) {
+        showCallResult(false, 'Error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = 'Call with AI Voice Agent';
+    }
+}
+
+function showCallResult(success, message) {
+    const el = document.getElementById('callResult');
+    el.style.display = 'block';
+    el.style.background = success ? '#052e16' : '#450a0a';
+    el.style.border = '1px solid ' + (success ? '#166534' : '#7f1d1d');
+    el.style.color = success ? '#86efac' : '#fca5a5';
+    el.textContent = message;
+    setTimeout(() => { el.style.display = 'none'; }, 8000);
+}
+
+// Load call config when navigating to the Call page
+// (handled in bindEvents nav rail handler above)
+
+async function setPublicUrl() {
+    const url = document.getElementById('publicUrlInput').value.trim();
+    if (!url) {
+        showPublicUrlResult(false, 'Please enter a URL');
+        return;
+    }
+    try {
+        const result = await apiPost('/api/set-public-url', { url });
+        if (result.success) {
+            showPublicUrlResult(true, 'Public URL set: ' + result.url);
+            loadCallConfig();  // Refresh status cards
+        } else {
+            showPublicUrlResult(false, result.error || 'Failed to set URL');
+        }
+    } catch (e) {
+        showPublicUrlResult(false, 'Error: ' + e.message);
+    }
+}
+
+function showPublicUrlResult(success, message) {
+    const el = document.getElementById('publicUrlResult');
+    el.style.display = 'block';
+    el.style.background = success ? '#052e16' : '#450a0a';
+    el.style.color = success ? '#86efac' : '#fca5a5';
+    el.textContent = message;
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+</script>
+
+</body>
+</html>
